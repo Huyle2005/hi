@@ -1,0 +1,518 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Trung tâm vận hành - IUH Smart Parking</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        .flash-capture { animation: flash 0.3s ease-out; }
+        @keyframes flash { 0% { opacity: 0.2; background: white; } 100% { opacity: 1; } }
+    </style>
+</head>
+<body class="bg-slate-100 text-slate-800 font-sans h-screen flex overflow-hidden">
+
+    <!-- SIDEBAR BÊN TRÁI -->
+    <aside class="w-64 bg-[#0a1931] text-white flex flex-col justify-between p-4 flex-shrink-0">
+        <div>
+            <div class="flex items-center space-x-3 bg-white text-slate-900 p-3 rounded-xl mb-6 shadow-md">
+                <div class="w-8 h-8 bg-blue-900 rounded-lg flex items-center justify-center font-bold text-white text-xs">IUH</div>
+                <div class="text-xs font-semibold leading-tight">Industrial University of Ho Chi Minh City</div>
+            </div>
+
+            <div class="text-[11px] font-semibold text-slate-400 mb-2 px-2 uppercase tracking-wider">Trung tâm vận hành</div>
+
+            <nav class="space-y-1 text-sm font-medium">
+                <button onclick="switchTab('overview')" id="nav-overview" class="w-full flex items-center space-x-3 px-3 py-2.5 rounded-xl bg-blue-600 text-white transition">
+                    <i class="fa-solid fa-gauge-high w-5"></i><span>Tổng quan</span>
+                </button>
+                <button onclick="switchTab('schedules')" id="nav-schedules" class="w-full flex items-center space-x-3 px-3 py-2.5 rounded-xl text-slate-300 hover:bg-slate-800 transition">
+                    <i class="fa-solid fa-calendar-days w-5"></i><span>Quản lý Lịch trình</span>
+                </button>
+                <button onclick="switchTab('drivers')" id="nav-drivers" class="w-full flex items-center space-x-3 px-3 py-2.5 rounded-xl text-slate-300 hover:bg-slate-800 transition">
+                    <i class="fa-solid fa-users w-5"></i><span>Quản lý Tài xế</span>
+                </button>
+                <button onclick="switchTab('vehicles')" id="nav-vehicles" class="w-full flex items-center space-x-3 px-3 py-2.5 rounded-xl text-slate-300 hover:bg-slate-800 transition">
+                    <i class="fa-solid fa-truck w-5"></i><span>Quản lý Xe</span>
+                </button>
+            </nav>
+        </div>
+
+        <div class="space-y-3">
+            <div class="bg-slate-800/60 p-3 rounded-xl text-xs space-y-1 border border-slate-700">
+                <div class="flex items-center space-x-2 text-emerald-400 font-medium">
+                    <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+                    <span>AI Sync Pi 4 Ready</span>
+                </div>
+            </div>
+
+            <a href="/logout" class="flex items-center justify-center space-x-2 w-full bg-red-600/20 text-red-400 hover:bg-red-600 hover:text-white p-2 rounded-xl text-xs font-bold transition">
+                <i class="fa-solid fa-right-from-bracket"></i><span>Đăng xuất</span>
+            </a>
+        </div>
+    </aside>
+
+    <!-- MAIN CONTENT -->
+    <main class="flex-1 flex flex-col overflow-y-auto">
+        <header class="bg-white border-b px-6 py-3 flex items-center justify-between sticky top-0 z-10 shadow-sm">
+            <h1 id="page-title" class="text-xl font-bold text-slate-800">Tổng quan hệ thống</h1>
+
+            <div class="flex items-center space-x-3 border-l pl-4">
+                <div class="text-right">
+                    <div class="text-sm font-bold text-blue-900">{{ user_name }}</div>
+                    <div class="text-xs text-slate-500">{{ user_role }}</div>
+                </div>
+                <div class="w-9 h-9 bg-blue-600 text-white font-bold rounded-full flex items-center justify-center text-sm shadow">
+                    N2
+                </div>
+            </div>
+        </header>
+
+        <!-- VIEW 1: TỔNG QUAN -->
+        <div id="view-overview" class="p-6 space-y-6">
+            <div class="grid grid-cols-3 gap-6">
+                <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm flex items-center justify-between">
+                    <div>
+                        <div class="text-xs text-slate-500 font-medium">TỔNG PHƯƠNG TIỆN</div>
+                        <div id="kpi-vehicles" class="text-2xl font-bold text-slate-800">0</div>
+                    </div>
+                    <div class="w-10 h-10 bg-blue-100 text-blue-600 rounded-xl flex items-center justify-center font-bold"><i class="fa-solid fa-truck"></i></div>
+                </div>
+
+                <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm flex items-center justify-between">
+                    <div>
+                        <div class="text-xs text-slate-500 font-medium">LỊCH TRÌNH ĐANG CHẠY</div>
+                        <div id="kpi-schedules" class="text-2xl font-bold text-emerald-600">0</div>
+                    </div>
+                    <div class="w-10 h-10 bg-emerald-100 text-emerald-600 rounded-xl flex items-center justify-center font-bold"><i class="fa-solid fa-route"></i></div>
+                </div>
+
+                <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm flex items-center justify-between">
+                    <div>
+                        <div class="text-xs text-slate-500 font-medium">SỰ CỐ CẦN XỬ LÝ</div>
+                        <div id="kpi-incidents" class="text-2xl font-bold text-amber-600">0</div>
+                    </div>
+                    <div class="w-10 h-10 bg-amber-100 text-amber-600 rounded-xl flex items-center justify-center font-bold"><i class="fa-solid fa-triangle-exclamation"></i></div>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-3 gap-6">
+                <div class="col-span-2 bg-white p-5 rounded-xl border border-slate-200 shadow-sm space-y-4">
+                    <div class="flex justify-between items-center">
+                        <h2 class="font-bold text-slate-800 text-base">Lịch trình sơ bộ xe xuất bến / về bãi</h2>
+                        <button onclick="switchTab('schedules')" class="text-xs text-blue-600 font-semibold hover:underline">Xem chi tiết &gt;</button>
+                    </div>
+
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-left text-xs">
+                            <thead>
+                                <tr class="border-b text-slate-400 font-semibold uppercase">
+                                    <th class="pb-3">TÀI XẾ</th>
+                                    <th class="pb-3">BIỂN SỐ</th>
+                                    <th class="pb-3">XUẤT BẾN (DK / TT)</th>
+                                    <th class="pb-3">VỀ BÃI (DK / TT)</th>
+                                    <th class="pb-3">TRẠNG THÁI</th>
+                                </tr>
+                            </thead>
+                            <tbody id="overview-schedules-list" class="divide-y"></tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- GHI CHÚ TRỄ GIỜ -->
+                <div class="bg-white p-5 rounded-xl border border-slate-200 shadow-sm space-y-4">
+                    <div class="flex justify-between items-center">
+                        <h2 class="font-bold text-slate-800 text-base">Ghi chú trễ giờ</h2>
+                        <i class="fa-solid fa-bell text-amber-500 text-xs"></i>
+                    </div>
+                    <div id="notes-container" class="space-y-3 max-h-80 overflow-y-auto"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- VIEW 2: QUẢN LÝ LỊCH TRÌNH -->
+        <div id="view-schedules" class="p-6 space-y-6 hidden">
+            <!-- FORM ĐĂNG KÝ KẾ HOẠCH (GỌN GÀNG, ĐÚNG THỰC TẾ) -->
+            <div class="bg-white p-5 rounded-xl border border-slate-200 shadow-sm space-y-4">
+                <h2 class="font-bold text-slate-800 text-base">Tạo Lịch Trình Xe Mới</h2>
+                <form id="add-schedule-form" class="grid grid-cols-5 gap-4 text-xs">
+                    <div>
+                        <label class="block mb-1 text-slate-500 font-semibold">Tài xế</label>
+                        <select id="schedule-driver-id" class="w-full p-2 border rounded-lg outline-none" required></select>
+                    </div>
+                    <div>
+                        <label class="block mb-1 text-slate-500 font-semibold">Biển số xe</label>
+                        <select id="schedule-vehicle-id" class="w-full p-2 border rounded-lg outline-none" required></select>
+                    </div>
+                    <div>
+                        <label class="block mb-1 text-slate-500 font-semibold">Giờ xuất bến (Dự kiến)</label>
+                        <input type="time" id="schedule-dep-time" class="w-full p-2 border rounded-lg outline-none" required>
+                    </div>
+                    <div>
+                        <label class="block mb-1 text-slate-500 font-semibold">Giờ về bãi (Dự kiến)</label>
+                        <input type="time" id="schedule-ret-time" class="w-full p-2 border rounded-lg outline-none">
+                    </div>
+                    <div class="flex items-end">
+                        <button type="submit" class="w-full bg-blue-600 text-white p-2 rounded-lg font-bold hover:bg-blue-700 transition">Tạo Lịch Trình</button>
+                    </div>
+                </form>
+            </div>
+
+            <div class="bg-white p-5 rounded-xl border border-slate-200 shadow-sm">
+                <h2 class="font-bold text-slate-800 text-base mb-4">Danh Sách Lịch Trình Chi Tiết</h2>
+                <table class="w-full text-left text-xs">
+                    <thead>
+                        <tr class="border-b text-slate-400 font-semibold uppercase">
+                            <th class="pb-3">TÀI XẾ</th>
+                            <th class="pb-3">BIỂN SỐ XE</th>
+                            <th class="pb-3">XUẤT BẾN (DK)</th>
+                            <th class="pb-3">XUẤT BẾN (TT)</th>
+                            <th class="pb-3">VỀ BÃI (DK)</th>
+                            <th class="pb-3">VỀ BÃI (TT)</th>
+                            <th class="pb-3">TRẠNG THÁI</th>
+                            <th class="pb-3 text-right">THAO TÁC</th>
+                        </tr>
+                    </thead>
+                    <tbody id="full-schedules-list" class="divide-y"></tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- VIEW 3: QUẢN LÝ TÀI XẾ -->
+        <div id="view-drivers" class="p-6 space-y-6 hidden">
+            <div class="bg-white p-5 rounded-xl border border-slate-200 shadow-sm space-y-4">
+                <div class="flex justify-between items-center">
+                    <h2 class="font-bold text-slate-800 text-base">Đăng Ký Tài Xế & Quét Khuôn Mặt AI</h2>
+                    <button type="button" onclick="openCameraModal()" class="bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2 rounded-lg font-bold text-xs flex items-center space-x-2">
+                        <i class="fa-solid fa-camera"></i><span>Mở Webcam Quét Face 3 Góc</span>
+                    </button>
+                </div>
+
+                <form id="add-driver-form" class="grid grid-cols-4 gap-4 text-xs">
+                    <input type="text" id="driver-code" placeholder="Mã TX (vd: TX003)" class="p-2 border rounded-lg outline-none" required>
+                    <input type="text" id="driver-name" placeholder="Họ và Tên" class="p-2 border rounded-lg outline-none" required>
+                    <input type="number" id="driver-age" placeholder="Tuổi" class="p-2 border rounded-lg outline-none" required>
+                    <select id="driver-gender" class="p-2 border rounded-lg outline-none">
+                        <option value="Nam">Nam</option>
+                        <option value="Nữ">Nữ</option>
+                    </select>
+
+                    <div class="col-span-4 flex items-center space-x-4 border-t pt-3">
+                        <span class="text-xs font-semibold text-slate-600">Trạng thái ảnh mặt:</span>
+                        <div id="face-status-badge" class="text-xs bg-amber-100 text-amber-800 px-3 py-1 rounded-full font-bold">
+                            Chưa quét khuôn mặt (Cần quét 3 góc)
+                        </div>
+                        <button type="submit" class="ml-auto bg-blue-600 text-white px-6 py-2 rounded-lg font-bold hover:bg-blue-700">Lưu Tài Xế</button>
+                    </div>
+                </form>
+            </div>
+
+            <div class="bg-white p-5 rounded-xl border border-slate-200 shadow-sm">
+                <h2 class="font-bold text-slate-800 text-base mb-4">Danh sách Tài xế & Trạng thái Face Dataset</h2>
+                <table class="w-full text-left text-xs">
+                    <thead>
+                        <tr class="border-b text-slate-400 font-semibold">
+                            <th class="pb-3">MÃ TX</th>
+                            <th class="pb-3">HỌ VÀ TÊN</th>
+                            <th class="pb-3">TUỔI / GIỚI TÍNH</th>
+                            <th class="pb-3">KHUÔN MẶT AI</th>
+                            <th class="pb-3 text-right">THAO TÁC</th>
+                        </tr>
+                    </thead>
+                    <tbody id="drivers-list" class="divide-y"></tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- VIEW 4: QUẢN LÝ XE -->
+        <div id="view-vehicles" class="p-6 space-y-6 hidden">
+            <div class="bg-white p-5 rounded-xl border border-slate-200 shadow-sm space-y-4">
+                <h2 class="font-bold text-slate-800 text-base">Thêm Phương Tiện Mới</h2>
+                <form id="add-vehicle-form" class="grid grid-cols-3 gap-4 text-xs">
+                    <input type="text" id="vehicle-plate" placeholder="Biển số (vd: 59C-999.99)" class="p-2 border rounded-lg outline-none" required>
+                    <select id="vehicle-type" class="p-2 border rounded-lg outline-none">
+                        <option value="Xe 16 chỗ">Xe 16 chỗ</option>
+                        <option value="Xe tải">Xe tải</option>
+                        <option value="Xe khác">Xe khác</option>
+                    </select>
+                    <button type="submit" class="bg-blue-600 text-white rounded-lg font-bold hover:bg-blue-700 transition">Thêm Xe</button>
+                </form>
+            </div>
+
+            <div class="bg-white p-5 rounded-xl border border-slate-200 shadow-sm">
+                <h2 class="font-bold text-slate-800 text-base mb-4">Danh sách Phương tiện</h2>
+                <table class="w-full text-left text-xs">
+                    <thead>
+                        <tr class="border-b text-slate-400 font-semibold">
+                            <th class="pb-3">BIỂN SỐ XE</th>
+                            <th class="pb-3">LOẠI XE</th>
+                            <th class="pb-3 text-right">THAO TÁC</th>
+                        </tr>
+                    </thead>
+                    <tbody id="vehicles-list" class="divide-y"></tbody>
+                </table>
+            </div>
+        </div>
+    </main>
+
+    <!-- MODAL POPUP CAMERA -->
+    <div id="camera-modal" class="fixed inset-0 bg-slate-900/80 backdrop-blur-sm z-50 flex items-center justify-center hidden">
+        <div class="bg-white w-full max-w-xl p-6 rounded-2xl shadow-2xl space-y-4 relative">
+            <div class="flex justify-between items-center border-b pb-3">
+                <h3 class="font-bold text-slate-800 text-sm flex items-center space-x-2">
+                    <i class="fa-solid fa-camera-retro text-blue-600"></i>
+                    <span>Chụp Khựng Frame 3 Góc Khuôn Mặt Tài Xế</span>
+                </h3>
+                <button onclick="closeCameraModal()" class="text-slate-400 hover:text-slate-600"><i class="fa-solid fa-xmark text-lg"></i></button>
+            </div>
+
+            <div class="relative bg-black rounded-xl overflow-hidden aspect-video flex items-center justify-center" id="cam-box">
+                <video id="webcam" autoplay playsinline class="w-full h-full object-cover"></video>
+                <div id="cam-overlay" class="absolute inset-0 border-2 border-dashed border-emerald-400/70 rounded-xl pointer-events-none flex items-center justify-center">
+                    <span id="guide-text" class="bg-black/60 text-white text-xs px-4 py-1.5 rounded-full font-bold">1. Nhìn THẲNG vào camera</span>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-3 gap-3 text-center text-xs">
+                <div class="border p-2 rounded-xl bg-slate-50">
+                    <span class="font-semibold block mb-1">Góc 1: Nhìn Thẳng</span>
+                    <img id="prev-1" class="w-full h-20 object-cover rounded bg-slate-200 border">
+                </div>
+                <div class="border p-2 rounded-xl bg-slate-50">
+                    <span class="font-semibold block mb-1">Góc 2: Nghiêng Trái</span>
+                    <img id="prev-2" class="w-full h-20 object-cover rounded bg-slate-200 border">
+                </div>
+                <div class="border p-2 rounded-xl bg-slate-50">
+                    <span class="font-semibold block mb-1">Góc 3: Nghiêng Phải</span>
+                    <img id="prev-3" class="w-full h-20 object-cover rounded bg-slate-200 border">
+                </div>
+            </div>
+
+            <div class="flex justify-between items-center border-t pt-3">
+                <button type="button" onclick="resetCapture()" class="text-xs text-slate-500 hover:underline">Chụp lại từ đầu</button>
+                <button type="button" id="btn-capture-step" onclick="captureNextAngle()" class="bg-blue-600 hover:bg-blue-700 text-white px-5 py-2 rounded-xl text-xs font-bold flex items-center space-x-2">
+                    <i class="fa-solid fa-camera"></i><span>Chụp Frame 1 (Thẳng)</span>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let capturedImages = [null, null, null];
+        let currentStep = 0;
+        let mediaStream = null;
+        let isDropdownPopulated = false;
+
+        function switchTab(tab) {
+            ['overview', 'schedules', 'drivers', 'vehicles'].forEach(t => {
+                document.getElementById(`view-${t}`).classList.add('hidden');
+                document.getElementById(`nav-${t}`).className = "w-full flex items-center space-x-3 px-3 py-2.5 rounded-xl text-slate-300 hover:bg-slate-800 transition";
+            });
+            document.getElementById(`view-${tab}`).classList.remove('hidden');
+            document.getElementById(`nav-${tab}`).className = "w-full flex items-center space-x-3 px-3 py-2.5 rounded-xl bg-blue-600 text-white transition";
+        }
+
+        async function openCameraModal() {
+            document.getElementById('camera-modal').classList.remove('hidden');
+            try {
+                mediaStream = await navigator.mediaDevices.getUserMedia({ video: { width: 640, height: 480 } });
+                document.getElementById('webcam').srcObject = mediaStream;
+            } catch (err) { alert("Không thể mở Camera!"); }
+        }
+
+        function closeCameraModal() {
+            if (mediaStream) mediaStream.getTracks().forEach(track => track.stop());
+            document.getElementById('camera-modal').classList.add('hidden');
+        }
+
+        function captureNextAngle() {
+            if (currentStep >= 3) return;
+            const video = document.getElementById('webcam');
+            const canvas = document.createElement('canvas');
+            canvas.width = video.videoWidth || 640;
+            canvas.height = video.videoHeight || 480;
+            canvas.getContext('2d').drawImage(video, 0, 0, canvas.width, canvas.height);
+            
+            const b64Img = canvas.toDataURL('image/jpeg');
+            capturedImages[currentStep] = b64Img;
+
+            const camBox = document.getElementById('cam-box');
+            camBox.classList.add('flash-capture');
+            setTimeout(() => camBox.classList.remove('flash-capture'), 300);
+
+            document.getElementById(`prev-${currentStep + 1}`).src = b64Img;
+            currentStep++;
+
+            const btn = document.getElementById('btn-capture-step');
+            const guide = document.getElementById('guide-text');
+
+            if (currentStep === 1) {
+                guide.innerText = "2. Quay mặt NGHIÊNG TRÁI nhẹ";
+                btn.innerHTML = '<i class="fa-solid fa-camera"></i><span>Chụp Frame 2 (Nghiêng Trái)</span>';
+            } else if (currentStep === 2) {
+                guide.innerText = "3. Quay mặt NGHIÊNG PHẢI nhẹ";
+                btn.innerHTML = '<i class="fa-solid fa-camera"></i><span>Chụp Frame 3 (Nghiêng Phải)</span>';
+            } else if (currentStep === 3) {
+                guide.innerText = "✅ Đã thu thập đủ 3 góc mặt!";
+                btn.className = "bg-emerald-600 text-white px-5 py-2 rounded-xl text-xs font-bold";
+                btn.innerText = "Hoàn Tất Quét Khuôn Mặt";
+                document.getElementById('face-status-badge').className = "text-xs bg-emerald-100 text-emerald-800 px-3 py-1 rounded-full font-bold";
+                document.getElementById('face-status-badge').innerText = "✅ Đã thu thập đủ 3 góc khuôn mặt";
+                setTimeout(closeCameraModal, 1000);
+            }
+        }
+
+        function resetCapture() {
+            capturedImages = [null, null, null];
+            currentStep = 0;
+            [1, 2, 3].forEach(i => document.getElementById(`prev-${i}`).src = '');
+            document.getElementById('guide-text').innerText = "1. Nhìn THẲNG vào camera";
+            const btn = document.getElementById('btn-capture-step');
+            btn.className = "bg-blue-600 hover:bg-blue-700 text-white px-5 py-2 rounded-xl text-xs font-bold flex items-center space-x-2";
+            btn.innerHTML = '<i class="fa-solid fa-camera"></i><span>Chụp Frame 1 (Thẳng)</span>';
+        }
+
+        async function loadData() {
+            const res = await fetch('/api/dashboard');
+            if (res.status === 401) { window.location.href = '/login'; return; }
+            const data = await res.json();
+
+            document.getElementById('kpi-vehicles').innerText = data.kpi.total_vehicles;
+            document.getElementById('kpi-schedules').innerText = data.kpi.active_schedules;
+            document.getElementById('kpi-incidents').innerText = data.kpi.total_incidents;
+
+            // Render Ghi chú trễ giờ
+            const notesContainer = document.getElementById('notes-container');
+            if (data.notes.length === 0) {
+                notesContainer.innerHTML = '<div class="text-xs text-slate-400 p-3 bg-slate-50 rounded-lg">Không có ghi chú trễ giờ nào.</div>';
+            } else {
+                notesContainer.innerHTML = data.notes.map(n => `
+                    <div class="p-3 bg-amber-50 border border-amber-200 rounded-xl space-y-1">
+                        <div class="text-xs font-bold text-amber-900">${n.title}</div>
+                        <div class="text-[11px] text-amber-800">${n.content}</div>
+                    </div>
+                `).join('');
+            }
+
+            // Render Lịch trình sơ bộ
+            document.getElementById('overview-schedules-list').innerHTML = data.schedules.slice(0, 5).map(s => `
+                <tr class="hover:bg-slate-50">
+                    <td class="py-3 font-bold text-slate-800">${s.driver_name}</td>
+                    <td class="py-3 font-semibold text-blue-600">${s.vehicle_plate}</td>
+                    <td class="py-3 text-slate-600">${s.departure_time} ${s.actual_dep_time ? `<span class="font-bold text-emerald-600">(${s.actual_dep_time})</span>` : ''}</td>
+                    <td class="py-3 text-slate-600">${s.return_time || '---'} ${s.actual_ret_time ? `<span class="font-bold text-emerald-600">(${s.actual_ret_time})</span>` : ''}</td>
+                    <td class="py-3"><span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-blue-100 text-blue-800">${s.status}</span></td>
+                </tr>
+            `).join('');
+
+            // Selectbox
+            if (!isDropdownPopulated || data.drivers.length !== document.getElementById('schedule-driver-id').children.length - 1) {
+                document.getElementById('schedule-driver-id').innerHTML = '<option value="">-- Chọn tài xế --</option>' +
+                    data.drivers.map(d => `<option value="${d.id}">${d.name} (${d.code})</option>`).join('');
+                
+                document.getElementById('schedule-vehicle-id').innerHTML = '<option value="">-- Chọn xe --</option>' +
+                    data.vehicles.map(v => `<option value="${v.id}">${v.plate} - ${v.vehicle_type}</option>`).join('');
+                
+                isDropdownPopulated = true;
+            }
+
+            // Lịch trình chi tiết
+            document.getElementById('full-schedules-list').innerHTML = data.schedules.map(s => `
+                <tr>
+                    <td class="py-3 font-bold">${s.driver_name}</td>
+                    <td class="py-3 font-semibold text-blue-600">${s.vehicle_plate}</td>
+                    <td class="py-3">${s.departure_time}</td>
+                    <td class="py-3 font-bold ${s.actual_dep_time > s.departure_time ? 'text-red-600' : 'text-emerald-600'}">${s.actual_dep_time || '---'}</td>
+                    <td class="py-3">${s.return_time || '---'}</td>
+                    <td class="py-3 font-bold ${s.actual_ret_time > s.return_time ? 'text-red-600' : 'text-emerald-600'}">${s.actual_ret_time || '---'}</td>
+                    <td class="py-3"><span class="px-2 py-0.5 rounded-full text-[11px] font-semibold bg-blue-100 text-blue-800">${s.status}</span></td>
+                    <td class="py-3 text-right"><button onclick="deleteSchedule(${s.id})" class="text-red-600 font-semibold">Xóa</button></td>
+                </tr>
+            `).join('');
+
+            // Tài xế
+            document.getElementById('drivers-list').innerHTML = data.drivers.map(d => `
+                <tr>
+                    <td class="py-3 font-bold">${d.code}</td>
+                    <td class="py-3">${d.name}</td>
+                    <td class="py-3">${d.age || '---'} tuổi / ${d.gender}</td>
+                    <td class="py-3">
+                        <span class="px-2 py-0.5 rounded-full text-[10px] font-bold ${d.has_face ? 'bg-emerald-100 text-emerald-800' : 'bg-slate-100 text-slate-500'}">
+                            ${d.has_face ? '● Đã Sync Khuôn Mặt' : 'Chưa có Face Data'}
+                        </span>
+                    </td>
+                    <td class="py-3 text-right"><button onclick="deleteDriver(${d.id})" class="text-red-600 font-semibold">Xóa</button></td>
+                </tr>
+            `).join('');
+
+            // Xe
+            document.getElementById('vehicles-list').innerHTML = data.vehicles.map(v => `
+                <tr>
+                    <td class="py-3 font-bold text-slate-800">${v.plate}</td>
+                    <td class="py-3">${v.vehicle_type}</td>
+                    <td class="py-3 text-right"><button onclick="deleteVehicle(${v.id})" class="text-red-600 font-semibold">Xóa</button></td>
+                </tr>
+            `).join('');
+        }
+
+        // Submits
+        document.getElementById('add-schedule-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            await fetch('/api/schedules', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    driver_id: document.getElementById('schedule-driver-id').value,
+                    vehicle_id: document.getElementById('schedule-vehicle-id').value,
+                    departure_time: document.getElementById('schedule-dep-time').value,
+                    return_time: document.getElementById('schedule-ret-time').value
+                })
+            });
+            e.target.reset();
+            loadData();
+        });
+
+        document.getElementById('add-driver-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            await fetch('/api/drivers', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    code: document.getElementById('driver-code').value,
+                    name: document.getElementById('driver-name').value,
+                    age: document.getElementById('driver-age').value,
+                    gender: document.getElementById('driver-gender').value,
+                    face_images: capturedImages
+                })
+            });
+            e.target.reset();
+            resetCapture();
+            isDropdownPopulated = false;
+            loadData();
+        });
+
+        document.getElementById('add-vehicle-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            await fetch('/api/vehicles', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    plate: document.getElementById('vehicle-plate').value,
+                    vehicle_type: document.getElementById('vehicle-type').value
+                })
+            });
+            e.target.reset();
+            isDropdownPopulated = false;
+            loadData();
+        });
+
+        async function deleteDriver(id) { if (confirm('Xóa tài xế này?')) { await fetch(`/api/drivers/${id}`, { method: 'DELETE' }); isDropdownPopulated = false; loadData(); } }
+        async function deleteVehicle(id) { if (confirm('Xóa xe này?')) { await fetch(`/api/vehicles/${id}`, { method: 'DELETE' }); isDropdownPopulated = false; loadData(); } }
+        async function deleteSchedule(id) { if (confirm('Xóa lịch trình này?')) { await fetch(`/api/schedules/${id}`, { method: 'DELETE' }); loadData(); } }
+
+        loadData();
+        setInterval(loadData, 5000);
+    </script>
+</body>
+</html>

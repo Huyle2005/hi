@@ -1,0 +1,346 @@
+import os
+import sqlite3
+import base64
+from datetime import datetime
+from flask import Flask, render_template, request, jsonify, session, redirect, url_for, send_from_directory
+
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+TEMPLATE_DIR = os.path.join(BASE_DIR, 'templates')
+UPLOADS_DIR = os.path.join(BASE_DIR, 'face_dataset')
+
+if not os.path.exists(UPLOADS_DIR):
+    os.makedirs(UPLOADS_DIR)
+
+app = Flask(__name__, template_folder=TEMPLATE_DIR)
+app.secret_key = 'ENTERPRISE_SMART_PARKING_SECRET_KEY_2026'
+DB_NAME = os.path.join(BASE_DIR, 'database.db')
+
+def get_db():
+    conn = sqlite3.connect(DB_NAME)
+    conn.row_factory = sqlite3.Row
+    return conn
+
+def init_db():
+    with get_db() as conn:
+        cursor = conn.cursor()
+        
+        # 1. Bảng Users
+        cursor.execute('''
+            CREATE TABLE IF NOT EXISTS users (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                username TEXT UNIQUE NOT NULL,
+                password TEXT NOT NULL,
+                full_name TEXT NOT NULL,
+                role TEXT NOT NULL
+            )
+        ''')
+
+        # 2. Bảng Tài xế
+        cursor.execute('''
+            CREATE TABLE IF NOT EXISTS drivers (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                code TEXT UNIQUE NOT NULL,
+                name TEXT NOT NULL,
+                age INTEGER,
+                gender TEXT,
+                phone TEXT,
+                face_img1 TEXT,
+                face_img2 TEXT,
+                face_img3 TEXT
+            )
+        ''')
+        
+        # 3. Bảng Phương tiện
+        cursor.execute('''
+            CREATE TABLE IF NOT EXISTS vehicles (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                plate TEXT UNIQUE NOT NULL,
+                vehicle_type TEXT NOT NULL
+            )
+        ''')
+        
+        # 4. Bảng Lịch trình (Giờ thực tế mặc định trống, chờ Raspberry Pi ghi nhận)
+        cursor.execute('''
+            CREATE TABLE IF NOT EXISTS schedules (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                driver_id INTEGER NOT NULL,
+                vehicle_id INTEGER NOT NULL,
+                departure_time TEXT NOT NULL,
+                return_time TEXT,
+                actual_dep_time TEXT DEFAULT '',
+                actual_ret_time TEXT DEFAULT '',
+                status TEXT DEFAULT 'Chờ xuất bến',
+                FOREIGN KEY (driver_id) REFERENCES drivers (id) ON DELETE CASCADE,
+                FOREIGN KEY (vehicle_id) REFERENCES vehicles (id) ON DELETE CASCADE
+            )
+        ''')
+
+        # 5. Bảng Sự cố
+        cursor.execute('''
+            CREATE TABLE IF NOT EXISTS incidents (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                created_at TEXT NOT NULL,
+                plate TEXT NOT NULL,
+                driver_name TEXT NOT NULL,
+                error_type TEXT NOT NULL,
+                status TEXT DEFAULT 'Chờ xử lý'
+            )
+        ''')
+
+        # Khởi tạo dữ liệu mặc định
+        cursor.execute("SELECT COUNT(*) FROM users")
+        if cursor.fetchone()[0] == 0:
+            cursor.execute("INSERT INTO users (username, password, full_name, role) VALUES (?, ?, ?, ?)",
+                           ('admin', 'admin@1234', 'Nhóm 2 - DAKT', 'Quản lý hệ thống'))
+            
+            cursor.executemany('INSERT INTO drivers (code, name, age, gender, phone) VALUES (?, ?, ?, ?, ?)', [
+                ('TX001', 'Lê Quốc Hùng', 35, 'Nam', '0901234567'),
+                ('TX002', 'Nguyễn Văn An', 29, 'Nam', '0908765432')
+            ])
+            cursor.executemany('INSERT INTO vehicles (plate, vehicle_type) VALUES (?, ?)', [
+                ('50H-246.80', 'Xe tải'),
+                ('51A-123.45', 'Xe 16 chỗ')
+            ])
+            cursor.executemany('''INSERT INTO schedules 
+                (driver_id, vehicle_id, departure_time, return_time, actual_dep_time, actual_ret_time, status) 
+                VALUES (?, ?, ?, ?, ?, ?, ?)''', [
+                (1, 1, '08:00', '17:00', '08:35', '', 'Đang chạy'),    # Đã qua cổng lúc 08:35 (Trễ)
+                (2, 2, '07:00', '12:00', '07:00', '12:45', 'Đã về bãi') # Đã về bãi lúc 12:45 (Trễ)
+            ])
+            cursor.executemany('INSERT INTO incidents (created_at, plate, driver_name, error_type, status) VALUES (?, ?, ?, ?, ?)', [
+                ('Hôm nay, 08:35', '50H-246.80', 'Lê Quốc Hùng', 'Lỗi nhận diện khuôn mặt tài xế', 'Chờ xử lý')
+            ])
+        conn.commit()
+
+# --- AUTHENTICATION ---
+@app.route('/login', methods=['GET', 'POST'])
+def login():
+    if request.method == 'POST':
+        data = request.get_json()
+        username = data.get('username')
+        password = data.get('password')
+        
+        conn = get_db()
+        user = conn.execute("SELECT * FROM users WHERE username = ? AND password = ?", (username, password)).fetchone()
+        
+        if user or (username == 'admin' and password == 'admin@1234'):
+            session['user_id'] = 1
+            session['full_name'] = 'Nhóm 2 - DAKT'
+            session['role'] = 'Quản lý hệ thống'
+            return jsonify({"success": True, "redirect": "/"})
+            
+        return jsonify({"success": False, "message": "Sai tài khoản hoặc mật khẩu (Mật khẩu: admin@1234)"}), 400
+    return render_template('login.html')
+
+@app.route('/logout')
+def logout():
+    session.clear()
+    return redirect(url_for('login'))
+
+@app.route('/')
+def index():
+    if 'user_id' not in session:
+        return redirect(url_for('login'))
+    return render_template('index.html', user_name=session.get('full_name'), user_role=session.get('role'))
+
+# --- API DASHBOARD TỔNG QUAN ---
+@app.route('/api/dashboard', methods=['GET'])
+def get_dashboard_data():
+    if 'user_id' not in session:
+        return jsonify({"error": "Unauthorized"}), 401
+
+    conn = get_db()
+    drivers = [dict(r) for r in conn.execute("SELECT id, code, name, age, gender, phone, (face_img1 IS NOT NULL) as has_face FROM drivers ORDER BY id DESC").fetchall()]
+    vehicles = [dict(r) for r in conn.execute("SELECT * FROM vehicles ORDER BY id DESC").fetchall()]
+    incidents = [dict(r) for r in conn.execute("SELECT * FROM incidents ORDER BY id DESC").fetchall()]
+    
+    schedules = [dict(r) for r in conn.execute('''
+        SELECT s.*, d.name as driver_name, v.plate as vehicle_plate, v.vehicle_type 
+        FROM schedules s
+        JOIN drivers d ON s.driver_id = d.id
+        JOIN vehicles v ON s.vehicle_id = v.id
+        ORDER BY s.id DESC
+    ''').fetchall()]
+    
+    # Tính toán Ghi chú trễ giờ dựa trên dữ liệu camera quét thực tế
+    notes = []
+    for s in schedules:
+        dep_plan = s['departure_time']
+        dep_act = s.get('actual_dep_time') or ''
+        ret_plan = s.get('return_time') or ''
+        ret_act = s.get('actual_ret_time') or ''
+
+        if dep_act and dep_act > dep_plan:
+            notes.append({
+                "type": "warning",
+                "title": f"Tài xế: {s['driver_name']} ({s['vehicle_plate']})",
+                "content": f"Xuất phát TRỄ so với lịch đăng ký ({dep_act} vs {dep_plan})"
+            })
+            
+        if ret_act and ret_plan and ret_act > ret_plan:
+            notes.append({
+                "type": "danger",
+                "title": f"Tài xế: {s['driver_name']} ({s['vehicle_plate']})",
+                "content": f"Về bãi TRỄ so với lịch dự kiến ({ret_act} vs {ret_plan})"
+            })
+
+    return jsonify({
+        "drivers": drivers,
+        "vehicles": vehicles,
+        "schedules": schedules,
+        "incidents": incidents,
+        "notes": notes,
+        "kpi": {
+            "total_vehicles": len(vehicles),
+            "active_schedules": len([s for s in schedules if s['status'] == 'Đang chạy']),
+            "total_incidents": len([i for i in incidents if i['status'] == 'Chờ xử lý'])
+        }
+    })
+
+# --- API ĐĂNG KÝ LỊCH TRÌNH MỚI (CHỈ CẦN GIỜ DỰ KIẾN) ---
+@app.route('/api/schedules', methods=['POST'])
+def add_schedule():
+    data = request.get_json()
+    conn = get_db()
+    conn.execute(
+        '''INSERT INTO schedules 
+           (driver_id, vehicle_id, departure_time, return_time, status) 
+           VALUES (?, ?, ?, ?, 'Chờ xuất bến')''',
+        (
+            data['driver_id'], 
+            data['vehicle_id'], 
+            data['departure_time'], 
+            data.get('return_time', '')
+        )
+    )
+    conn.commit()
+    return jsonify({"success": True})
+
+@app.route('/api/schedules/<int:schedule_id>', methods=['DELETE'])
+def delete_schedule(schedule_id):
+    conn = get_db()
+    conn.execute("DELETE FROM schedules WHERE id = ?", (schedule_id,))
+    conn.commit()
+    return jsonify({"success": True})
+
+# --- API NHẬN TÍN HIỆU TỰ ĐỘNG TỪ RASPBERRY PI 4 KHI XE RA/VÀO CỔNG ---
+@app.route('/api/gate-event', methods=['POST'])
+def handle_gate_event():
+    data = request.get_json() or {}
+    plate = data.get('plate')
+    action = data.get('action', 'OUT')  # 'OUT': Xe ra cổng, 'IN': Xe vào bãi
+    now_time = datetime.now().strftime('%H:%M')
+    
+    conn = get_db()
+    cursor = conn.cursor()
+    
+    # Tìm lịch trình mới nhất của xe này
+    schedule = cursor.execute('''
+        SELECT s.id, s.status FROM schedules s
+        JOIN vehicles v ON s.vehicle_id = v.id
+        WHERE v.plate = ? ORDER BY s.id DESC LIMIT 1
+    ''', (plate,)).fetchone()
+    
+    if schedule:
+        if action == 'OUT':
+            cursor.execute('''
+                UPDATE schedules 
+                SET actual_dep_time = ?, status = 'Đang chạy' 
+                WHERE id = ?
+            ''', (now_time, schedule['id']))
+        elif action == 'IN':
+            cursor.execute('''
+                UPDATE schedules 
+                SET actual_ret_time = ?, status = 'Đã về bãi' 
+                WHERE id = ?
+            ''', (now_time, schedule['id']))
+        conn.commit()
+        return jsonify({"success": True, "message": f"Cập nhật thời gian thực tế xe {plate} thành công lúc {now_time}"})
+    
+    return jsonify({"success": False, "message": "Không tìm thấy lịch trình đăng ký cho xe này"}), 404
+
+# --- API TÀI XẾ & FACE DATASET ---
+@app.route('/api/drivers', methods=['POST'])
+def add_driver():
+    data = request.get_json()
+    conn = get_db()
+    cursor = conn.cursor()
+    try:
+        code = data['code']
+        imgs = data.get('face_images', [])
+        saved_paths = []
+        
+        for idx, img_b64 in enumerate(imgs):
+            if img_b64 and ',' in img_b64:
+                header, encoded = img_b64.split(',', 1)
+                img_data = base64.b64decode(encoded)
+                filename = f"{code}_angle{idx+1}.jpg"
+                filepath = os.path.join(UPLOADS_DIR, filename)
+                with open(filepath, "wb") as f:
+                    f.write(img_data)
+                saved_paths.append(filename)
+            else:
+                saved_paths.append(None)
+
+        while len(saved_paths) < 3:
+            saved_paths.append(None)
+
+        cursor.execute(
+            "INSERT INTO drivers (code, name, age, gender, phone, face_img1, face_img2, face_img3) VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
+            (code, data['name'], data.get('age'), data.get('gender', 'Nam'), data.get('phone', ''), saved_paths[0], saved_paths[1], saved_paths[2])
+        )
+        conn.commit()
+        return jsonify({"success": True})
+    except sqlite3.IntegrityError:
+        return jsonify({"success": False, "message": "Mã tài xế đã tồn tại!"}), 400
+
+@app.route('/api/drivers/<int:driver_id>', methods=['DELETE'])
+def delete_driver(driver_id):
+    conn = get_db()
+    conn.execute("DELETE FROM drivers WHERE id = ?", (driver_id,))
+    conn.commit()
+    return jsonify({"success": True})
+
+@app.route('/api/face-dataset', methods=['GET'])
+def get_face_dataset():
+    conn = get_db()
+    drivers = conn.execute("SELECT code, name, face_img1, face_img2, face_img3 FROM drivers WHERE face_img1 IS NOT NULL").fetchall()
+    dataset = []
+    for d in drivers:
+        dataset.append({
+            "code": d["code"],
+            "name": d["name"],
+            "images": [
+                f"/face_dataset/{d['face_img1']}" if d['face_img1'] else None,
+                f"/face_dataset/{d['face_img2']}" if d['face_img2'] else None,
+                f"/face_dataset/{d['face_img3']}" if d['face_img3'] else None
+            ]
+        })
+    return jsonify({"success": True, "dataset": dataset})
+
+@app.route('/face_dataset/<filename>')
+def serve_face_file(filename):
+    return send_from_directory(UPLOADS_DIR, filename)
+
+@app.route('/api/vehicles', methods=['POST'])
+def add_vehicle():
+    data = request.get_json()
+    conn = get_db()
+    try:
+        conn.execute("INSERT INTO vehicles (plate, vehicle_type) VALUES (?, ?)", (data['plate'], data.get('vehicle_type', 'Xe khác')))
+        conn.commit()
+        return jsonify({"success": True})
+    except sqlite3.IntegrityError:
+        return jsonify({"success": False, "message": "Biển số xe đã tồn tại!"}), 400
+
+@app.route('/api/vehicles/<int:vehicle_id>', methods=['DELETE'])
+def delete_vehicle(vehicle_id):
+    conn = get_db()
+    conn.execute("DELETE FROM vehicles WHERE id = ?", (vehicle_id,))
+    conn.commit()
+    return jsonify({"success": True})
+
+if __name__ == '__main__':
+    init_db()
+    print("Server running at: http://localhost:5000")
+    app.run(host='0.0.0.0', port=5000, debug=True)
