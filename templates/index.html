@@ -16,9 +16,12 @@
     <!-- SIDEBAR BÊN TRÁI -->
     <aside class="w-64 bg-[#0a1931] text-white flex flex-col justify-between p-4 flex-shrink-0">
         <div>
-            <div class="flex items-center space-x-3 bg-white text-slate-900 p-3 rounded-xl mb-6 shadow-md">
-                <div class="w-8 h-8 bg-blue-900 rounded-lg flex items-center justify-center font-bold text-white text-xs">IUH</div>
-                <div class="text-xs font-semibold leading-tight">Industrial University of Ho Chi Minh City</div>
+            <img src="{{ url_for('static', filename='images/logo.png') }}"
+                alt="Logo IUH"
+                class="w-10 h-10 object-contain flex-shrink-0">
+
+            <div class="text-xs font-semibold leading-tight">
+                Industrial University of Ho Chi Minh City
             </div>
 
             <div class="text-[11px] font-semibold text-slate-400 mb-2 px-2 uppercase tracking-wider">Trung tâm vận hành</div>
