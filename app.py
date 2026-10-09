@@ -98,9 +98,13 @@ def init_db():
         # Khởi tạo dữ liệu mặc định
         cursor.execute("SELECT COUNT(*) AS count FROM users")
         if cursor.fetchone()["count"] == 0:
-            cursor.execute("INSERT INTO users (username, password, full_name, role) VALUES (%s, %s, %s, %s)",
-                           ('admin', 'admin@1234', 'Nhóm 2 - DAKT', 'Quản lý hệ thống'))
-            
+            cursor.execute(
+                """
+                INSERT INTO users (username, password, full_name, role)
+                VALUES (%s, %s, %s, %s)
+                """,
+                ('admin', 'admin@1234', 'Nhóm 2 - DAKT', 'Quản lý hệ thống')
+            )
             cursor.executemany('INSERT INTO drivers (code, name, age, gender, phone) VALUES (%s, %s, %s, %s, %s)', [
                 ('TX001', 'Lê Quốc Hùng', 35, 'Nam', '0901234567'),
                 ('TX002', 'Nguyễn Văn An', 29, 'Nam', '0908765432')
@@ -335,7 +339,10 @@ def add_vehicle():
     data = request.get_json()
     conn = get_db()
     try:
-        conn.execute("INSERT INTO vehicles (plate, vehicle_type) VALUES (%s, %s)", (data['plate'], data.get('vehicle_type', 'Xe khác')))
+        conn.execute(
+            "INSERT INTO vehicles (plate, vehicle_type) VALUES (%s, %s)",
+            (data['plate'], data.get('vehicle_type', 'Xe khác'))
+        )
         conn.commit()
         return jsonify({"success": True})
     except UniqueViolation:
@@ -348,8 +355,11 @@ def delete_vehicle(vehicle_id):
     conn.commit()
     return jsonify({"success": True})
 
+
+# Khởi tạo bảng PostgreSQL khi ứng dụng được nạp
+init_db()
+
 if __name__ == "__main__":
-    init_db()
     app.run(
         host="0.0.0.0",
         port=int(os.environ.get("PORT", 5000)),
