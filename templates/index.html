@@ -192,7 +192,7 @@
                 <form id="add-driver-form" class="grid grid-cols-4 gap-4 text-xs">
                     <input type="text" id="driver-code" placeholder="Mã TX (vd: TX003)" class="p-2 border rounded-lg outline-none" required>
                     <input type="text" id="driver-name" placeholder="Họ và Tên" class="p-2 border rounded-lg outline-none" required>
-                    <input type="number" id="driver-age" placeholder="Tuổi" class="p-2 border rounded-lg outline-none" required>
+                    <input type="number" id="driver-age" placeholder="Tuổi" class="p-2 border rounded-lg outline-none" min="18" max="60" step="1" required>
                     <select id="driver-gender" class="p-2 border rounded-lg outline-none">
                         <option value="Nam">Nam</option>
                         <option value="Nữ">Nữ</option>
@@ -363,14 +363,23 @@
             }
         }
 
+        
         function resetCapture() {
             capturedImages = [null, null, null];
             currentStep = 0;
-            [1, 2, 3].forEach(i => document.getElementById(`prev-${i}`).src = '');
-            document.getElementById('guide-text').innerText = "1. Nhìn THẲNG vào camera";
+            [1, 2, 3].forEach(i => {
+                document.getElementById(`prev-${i}`).src = '';
+            });
+            document.getElementById('guide-text').innerText ='1. Nhìn THẲNG vào camera';
             const btn = document.getElementById('btn-capture-step');
-            btn.className = "bg-blue-600 hover:bg-blue-700 text-white px-5 py-2 rounded-xl text-xs font-bold flex items-center space-x-2";
-            btn.innerHTML = '<i class="fa-solid fa-camera"></i><span>Chụp Frame 1 (Thẳng)</span>';
+            btn.disabled = false;
+            btn.className =
+                'bg-blue-600 hover:bg-blue-700 text-white px-5 py-2 rounded-xl text-xs font-bold flex items-center space-x-2';
+            btn.innerHTML =
+                '<i class="fa-solid fa-camera"></i><span>Chụp Frame 1 (Thẳng)</span>';
+            const badge = document.getElementById('face-status-badge');
+            badge.className ='text-xs bg-amber-100 text-amber-800 px-3 py-1 rounded-full font-bold';
+            badge.innerText = 'Chưa quét khuôn mặt (Cần quét 3 góc)';
         }
 
         async function loadData() {
@@ -475,21 +484,36 @@
 
         document.getElementById('add-driver-form').addEventListener('submit', async (e) => {
             e.preventDefault();
-            await fetch('/api/drivers', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    code: document.getElementById('driver-code').value,
-                    name: document.getElementById('driver-name').value,
-                    age: document.getElementById('driver-age').value,
-                    gender: document.getElementById('driver-gender').value,
-                    face_images: capturedImages
-                })
-            });
-            e.target.reset();
-            resetCapture();
-            isDropdownPopulated = false;
-            loadData();
+            if (capturedImages.some(img => !img || !img.startsWith('data:image/jpeg;base64,'))) {
+                alert('Bạn phải chụp đủ 3 góc khuôn mặt trước khi lưu!');
+                return;
+            }
+            try {
+                const res = await fetch('/api/drivers', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        code: document.getElementById('driver-code').value,
+                        name: document.getElementById('driver-name').value,
+                        age: document.getElementById('driver-age').value,
+                        gender: document.getElementById('driver-gender').value,
+                        face_images: capturedImages
+                    })
+                });
+                const result = await res.json();
+                if (!res.ok || !result.success) {
+                    alert(result.message || 'Lưu tài xế thất bại!');
+                    return;
+                }
+                alert('Đã lưu tài xế thành công!');
+                e.target.reset();
+                resetCapture();
+                isDropdownPopulated = false;
+                await loadData();
+            } catch (err) {
+                console.error(err);
+                alert('Không thể kết nối máy chủ!');
+            }
         });
 
         document.getElementById('add-vehicle-form').addEventListener('submit', async (e) => {
