@@ -21,7 +21,7 @@ if not os.path.exists(UPLOADS_DIR):
 app = Flask(__name__, template_folder=TEMPLATE_DIR)
 
 # OTP đăng ký tạm thời trong bộ nhớ máy chủ
-pending_registrations = {}
+
 OTP_EXPIRE_SECONDS = 300  # 5 phút
 OTP_RESEND_SECONDS = 60   # Chờ 60 giây mới gửi lại
 
@@ -199,48 +199,6 @@ def register():
         pending_registrations.pop(email, None)
         return jsonify(success=False, message="Không gửi được mã xác minh. Vui lòng thử lại sau."), 500
 
-
-@app.route('/register', methods=['GET'])
-def register_page():
-    return render_template('register.html')
-
-@app.route('/verify-register', methods=['POST'])
-def verify_register():
-    data = request.get_json(silent=True) or {}
-    email = (data.get('email') or '').strip().lower()
-    otp = (data.get('otp') or '').strip()
-    pending = pending_registrations.get(email)
-
-    if not pending:
-        return jsonify(success=False, message="Không tìm thấy đăng ký đang chờ. Vui lòng đăng ký lại."), 400
-    if time.time() > pending['expires_at']:
-        pending_registrations.pop(email, None)
-        return jsonify(success=False, message="Mã đã hết hạn. Vui lòng đăng ký lại."), 400
-    if pending['attempts'] >= 5:
-        pending_registrations.pop(email, None)
-        return jsonify(success=False, message="Bạn đã nhập sai quá 5 lần. Vui lòng đăng ký lại."), 429
-    if not re.fullmatch(r"\d{6}", otp):
-        return jsonify(success=False, message="Mã xác minh phải gồm đúng 6 chữ số."), 400
-
-    otp_hash = __import__('hashlib').sha256(otp.encode()).hexdigest()
-    if not secrets.compare_digest(otp_hash, pending['otp_hash']):
-        pending['attempts'] += 1
-        return jsonify(success=False, message="Mã xác minh không đúng."), 400
-
-    try:
-        with get_db() as conn:
-            conn.execute("""
-                INSERT INTO accounts (username, password_hash, full_name, email, role, email_verified)
-                VALUES (%s, %s, %s, %s, %s, TRUE)
-            """, (pending['username'], pending['password_hash'], pending['full_name'], email, 'driver'))
-        pending_registrations.pop(email, None)
-        return jsonify(success=True, message="Xác minh email thành công. Tài khoản đã được tạo.", redirect="/login")
-    except UniqueViolation:
-        pending_registrations.pop(email, None)
-        return jsonify(success=False, message="Tên đăng nhập hoặc email đã được sử dụng."), 409
-    except Exception:
-        app.logger.exception("Lỗi tạo tài khoản sau xác minh OTP")
-        return jsonify(success=False, message="Không tạo được tài khoản. Vui lòng thử lại."), 500
 
 # --- AUTHENTICATION ---
 @app.route('/login', methods=['GET', 'POST'])
