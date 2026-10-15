@@ -178,9 +178,14 @@ def send_login_otp():
     data = request.get_json(silent=True) or {}
     email = (data.get('email') or '').strip().lower()
 
-    if not re.fullmatch(r"[^@\s]+@[^@\s]+\.[^@\s]+", email):
-        return jsonify(success=False, message="Email không hợp lệ."), 400
-
+    if not email or not re.fullmatch(
+        r"[A-Za-z0-9.!#$%&'*+/=?^_`{|}~-]+@[A-Za-z0-9-]+(?:\.[A-Za-z0-9-]+)+",
+        email
+    ):
+        return jsonify(
+            success=False,
+            message="Email không hợp lệ. Vui lòng kiểm tra lại."
+        ), 400
     now = time.time()
     pending = pending_logins.get(user_id)
 
