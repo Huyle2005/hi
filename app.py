@@ -105,23 +105,13 @@ def init_db():
                 """,
                 ('admin', 'admin@1234', 'Nhóm 2 - DAKT', 'Quản lý hệ thống')
             )
-            cursor.executemany('INSERT INTO drivers (code, name, age, gender, phone) VALUES (%s, %s, %s, %s, %s)', [
-                ('TX001', 'Lê Quốc Hùng', 35, 'Nam', '0901234567'),
-                ('TX002', 'Nguyễn Văn An', 29, 'Nam', '0908765432')
-            ])
+            cursor.executemany('INSERT INTO drivers (code, name, age, gender, phone) VALUES (%s, %s, %s, %s, %s)', [])
             cursor.executemany('INSERT INTO vehicles (plate, vehicle_type) VALUES (%s, %s)', [
-                ('50H-246.80', 'Xe tải'),
-                ('51A-123.45', 'Xe 16 chỗ')
             ])
             cursor.executemany('''INSERT INTO schedules 
                 (driver_id, vehicle_id, departure_time, return_time, actual_dep_time, actual_ret_time, status) 
-                VALUES (%s, %s, %s, %s, %s, %s, %s)''', [
-                (1, 1, '08:00', '17:00', '08:35', '', 'Đang chạy'),    # Đã qua cổng lúc 08:35 (Trễ)
-                (2, 2, '07:00', '12:00', '07:00', '12:45', 'Đã về bãi') # Đã về bãi lúc 12:45 (Trễ)
-            ])
-            cursor.executemany('INSERT INTO incidents (created_at, plate, driver_name, error_type, status) VALUES (%s, %s, %s, %s, %s)', [
-                ('Hôm nay, 08:35', '50H-246.80', 'Lê Quốc Hùng', 'Lỗi nhận diện khuôn mặt tài xế', 'Chờ xử lý')
-            ])
+                VALUES (%s, %s, %s, %s, %s, %s, %s)''', [])
+            cursor.executemany('INSERT INTO incidents (created_at, plate, driver_name, error_type, status) VALUES (%s, %s, %s, %s, %s)', [])
         conn.commit()
 
 # --- AUTHENTICATION ---
