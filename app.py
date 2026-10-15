@@ -5,7 +5,7 @@ from flask import Flask, render_template, request, jsonify, session, redirect, u
 import psycopg
 from psycopg.rows import dict_row
 from psycopg.errors import UniqueViolation, ForeignKeyViolation
-
+import hashlib
 from werkzeug.security import check_password_hash, generate_password_hash
 from email.message import EmailMessage
 import smtplib
@@ -32,7 +32,7 @@ if not app.secret_key:
 OTP_EXPIRE_SECONDS = 300  # 5 phút
 OTP_RESEND_SECONDS = 60   # Chờ 60 giây mới gửi lại
 
-
+pending_logins = {}
 def get_db():
     database_url = os.environ.get("DATABASE_URL")
 
