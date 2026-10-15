@@ -126,8 +126,10 @@ def login():
         with get_db() as conn:
             user = conn.execute("SELECT * FROM accounts WHERE username = %s", (username,)).fetchone()
 
-        if not user or not check_password_hash(user['password_hash'], password):
+       
+        if not user or user['password_hash'] != password:
             return jsonify({"success": False, "message": "Sai tài khoản hoặc mật khẩu"}), 400
+
         if not user['email_verified']:
             return jsonify({"success": False, "message": "Email chưa xác minh"}), 403
 
