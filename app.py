@@ -8,7 +8,10 @@ from psycopg.errors import UniqueViolation, ForeignKeyViolation
 
 from werkzeug.security import check_password_hash, generate_password_hash
 from email.message import EmailMessage
-import smtplib, secrets, time, re
+import smtplib
+import secrets
+import time
+import re
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 TEMPLATE_DIR = os.path.join(BASE_DIR, 'templates')
@@ -19,6 +22,10 @@ if not os.path.exists(UPLOADS_DIR):
     os.makedirs(UPLOADS_DIR)
 
 app = Flask(__name__, template_folder=TEMPLATE_DIR)
+app.secret_key = os.environ.get("SECRET_KEY")
+
+if not app.secret_key:
+    raise RuntimeError("Chưa cấu hình SECRET_KEY trên Render")
 
 # OTP đăng ký tạm thời trong bộ nhớ máy chủ
 
@@ -39,10 +46,11 @@ def get_db():
 
     return psycopg.connect(database_url, row_factory=dict_row)
 
+
 def init_db():
     with get_db() as conn:
         cursor = conn.cursor()
-        
+
         # 1. Bảng Users
         cursor.execute('''
             CREATE TABLE IF NOT EXISTS users (
@@ -68,7 +76,7 @@ def init_db():
                 face_img3 TEXT
             )
         ''')
-        
+
         # 3. Bảng Phương tiện
         cursor.execute('''
             CREATE TABLE IF NOT EXISTS vehicles (
@@ -77,7 +85,7 @@ def init_db():
                 vehicle_type TEXT NOT NULL
             )
         ''')
-        
+
         # 4. Bảng Lịch trình (Giờ thực tế mặc định trống, chờ Raspberry Pi ghi nhận)
         cursor.execute('''
             CREATE TABLE IF NOT EXISTS schedules (
@@ -116,35 +124,40 @@ def init_db():
                 """,
                 ('admin', 'admin@1234', 'Nhóm 2 - DAKT', 'Quản lý hệ thống')
             )
-            cursor.executemany('INSERT INTO drivers (code, name, age, gender, phone) VALUES (%s, %s, %s, %s, %s)', [])
+            cursor.executemany(
+                'INSERT INTO drivers (code, name, age, gender, phone) VALUES (%s, %s, %s, %s, %s)', [])
             cursor.executemany('INSERT INTO vehicles (plate, vehicle_type) VALUES (%s, %s)', [
             ])
             cursor.executemany('''INSERT INTO schedules 
                 (driver_id, vehicle_id, departure_time, return_time, actual_dep_time, actual_ret_time, status) 
                 VALUES (%s, %s, %s, %s, %s, %s, %s)''', [])
-            cursor.executemany('INSERT INTO incidents (created_at, plate, driver_name, error_type, status) VALUES (%s, %s, %s, %s, %s)', [])
+            cursor.executemany(
+                'INSERT INTO incidents (created_at, plate, driver_name, error_type, status) VALUES (%s, %s, %s, %s, %s)', [])
         conn.commit()
 
 
 def send_otp_email(to_email, otp):
     mail_address = os.environ.get("MAIL_ADDRESS")
     mail_password = os.environ.get("MAIL_APP_PASSWORD")
+
     if not mail_address or not mail_password:
-        raise RuntimeError("Chưa cấu hình MAIL_ADDRESS hoặc MAIL_APP_PASSWORD trên Render")
+        raise RuntimeError("Chưa cấu hình email gửi OTP trên Render")
+
     msg = EmailMessage()
-    msg["Subject"] = "Mã xác minh đăng ký - IUH Smart Parking"
+    msg["Subject"] = "Mã xác minh email - IUH Smart Parking"
     msg["From"] = mail_address
     msg["To"] = to_email
-    msg.set_content(f"""Xin chào,
+    msg.set_content(
+        f"Mã xác minh của bạn là: {otp}\n"
+        "Mã có hiệu lực trong 5 phút."
+    )
 
-Mã xác minh đăng ký IUH Smart Parking của bạn là: {otp}
-
-Mã có hiệu lực trong 5 phút. Không chia sẻ mã này với người khác.
-Nếu bạn không yêu cầu đăng ký, hãy bỏ qua email này.
-""")
-    with smtplib.SMTP_SSL("smtp.gmail.com", 465, timeout=20) as smtp:
+    with smtplib.SMTP_SSL(
+        "smtp.gmail.com", 465, timeout=20
+    ) as smtp:
         smtp.login(mail_address, mail_password)
         smtp.send_message(msg)
+
 
 @app.route('/verify-email')
 def verify_email():
@@ -152,57 +165,6 @@ def verify_email():
         return redirect(url_for('login'))
 
     return render_template('verify_email.html')
-@app.route('/register', methods=['POST'])
-def register():
-    data = request.get_json(silent=True) or {}
-    full_name = (data.get('full_name') or '').strip()
-    username = (data.get('username') or '').strip()
-    email = (data.get('email') or '').strip().lower()
-    password = data.get('password') or ''
-    confirm_password = data.get('confirm_password') or ''
-
-    if not all([full_name, username, email, password, confirm_password]):
-        return jsonify(success=False, message="Vui lòng nhập đầy đủ thông tin."), 400
-    if len(username) < 3 or len(username) > 50:
-        return jsonify(success=False, message="Tên đăng nhập phải từ 3 đến 50 ký tự."), 400
-    if not re.fullmatch(r"[^@\s]+@[^@\s]+\.[^@\s]+", email):
-        return jsonify(success=False, message="Email không hợp lệ."), 400
-    if len(password) < 8:
-        return jsonify(success=False, message="Mật khẩu phải có ít nhất 8 ký tự."), 400
-    if password != confirm_password:
-        return jsonify(success=False, message="Mật khẩu nhập lại không khớp."), 400
-
-    now = time.time()
-    pending = pending_registrations.get(email)
-    if pending and now - pending['sent_at'] < OTP_RESEND_SECONDS:
-        return jsonify(success=False, message="Vui lòng chờ 60 giây trước khi yêu cầu mã mới."), 429
-
-    try:
-        with get_db() as conn:
-            existing = conn.execute(
-                "SELECT 1 FROM accounts WHERE LOWER(username) = LOWER(%s) OR LOWER(email) = LOWER(%s) LIMIT 1",
-                (username, email)
-            ).fetchone()
-        if existing:
-            return jsonify(success=False, message="Tên đăng nhập hoặc email đã được sử dụng."), 409
-
-        otp = f"{secrets.randbelow(1000000):06d}"
-        pending_registrations[email] = {
-            'full_name': full_name,
-            'username': username,
-            'password_hash': generate_password_hash(password),
-            'email': email,
-            'otp_hash': __import__('hashlib').sha256(otp.encode()).hexdigest(),
-            'expires_at': now + OTP_EXPIRE_SECONDS,
-            'sent_at': now,
-            'attempts': 0
-        }
-        send_otp_email(email, otp)
-        return jsonify(success=True, message="Đã gửi mã xác minh 6 số đến email. Mã có hiệu lực 5 phút.")
-    except Exception:
-        app.logger.exception("Lỗi đăng ký hoặc gửi email OTP")
-        pending_registrations.pop(email, None)
-        return jsonify(success=False, message="Không gửi được mã xác minh. Vui lòng thử lại sau."), 500
 
 
 # --- AUTHENTICATION ---
@@ -210,13 +172,13 @@ def register():
 def login():
     if request.method == 'POST':
         data = request.get_json(silent=True) or {}
-        username, password = (data.get('username') or '').strip(), data.get('password') or ''
+        username, password = (data.get('username')
+                              or '').strip(), data.get('password') or ''
 
         with get_db() as conn:
-            user = conn.execute("SELECT * FROM accounts WHERE username = %s", (username,)).fetchone()
+            user = conn.execute(
+                "SELECT * FROM accounts WHERE username = %s", (username,)).fetchone()
 
-       
-        
         if not user:
             return jsonify({"success": False, "message": "Sai tài khoản hoặc mật khẩu"}), 400
         stored_password = user['password_hash']
@@ -238,7 +200,8 @@ def login():
                 "redirect": url_for('verify_email')
             })
 
-        session.update(user_id=user['id'], full_name=user['full_name'], role=user['role'])
+        session.update(
+            user_id=user['id'], full_name=user['full_name'], role=user['role'])
         role = (user['role'] or '').strip().lower()
 
         if role in ['admin', 'quản lý hệ thống']:
@@ -247,34 +210,47 @@ def login():
             return jsonify({"success": True, "redirect": "/driver"})
         return jsonify({"success": False, "message": "Tài khoản chưa được cấp quyền"}), 403
     return render_template('login.html')
+
+
 @app.route('/logout')
 def logout():
     session.clear()
     return redirect(url_for('login'))
 
+
 @app.route('/')
 def index():
-    if 'user_id' not in session: return redirect(url_for('login'))
-    if (session.get('role') or '').strip().lower() not in ['admin', 'quản lý hệ thống']: return redirect(url_for('driver_page'))
+    if 'user_id' not in session:
+        return redirect(url_for('login'))
+    if (session.get('role') or '').strip().lower() not in ['admin', 'quản lý hệ thống']:
+        return redirect(url_for('driver_page'))
     return render_template('index.html', user_name=session.get('full_name'), user_role=session.get('role'))
+
 
 @app.route('/driver')
 def driver_page():
-    if 'user_id' not in session: return redirect(url_for('login'))
-    if (session.get('role') or '').strip().lower() != 'driver': return redirect(url_for('index'))
+    if 'user_id' not in session:
+        return redirect(url_for('login'))
+    if (session.get('role') or '').strip().lower() != 'driver':
+        return redirect(url_for('index'))
     return render_template('driver.html', user_name=session.get('full_name'), user_role=session.get('role'))
 
 # --- API DASHBOARD TỔNG QUAN ---
+
+
 @app.route('/api/dashboard', methods=['GET'])
 def get_dashboard_data():
     if 'user_id' not in session:
         return jsonify({"error": "Unauthorized"}), 401
 
     conn = get_db()
-    drivers = [dict(r) for r in conn.execute("SELECT id, code, name, age, gender, phone, (face_img1 IS NOT NULL) as has_face FROM drivers ORDER BY id DESC").fetchall()]
-    vehicles = [dict(r) for r in conn.execute("SELECT * FROM vehicles ORDER BY id DESC").fetchall()]
-    incidents = [dict(r) for r in conn.execute("SELECT * FROM incidents ORDER BY id DESC").fetchall()]
-    
+    drivers = [dict(r) for r in conn.execute(
+        "SELECT id, code, name, age, gender, phone, (face_img1 IS NOT NULL) as has_face FROM drivers ORDER BY id DESC").fetchall()]
+    vehicles = [dict(r) for r in conn.execute(
+        "SELECT * FROM vehicles ORDER BY id DESC").fetchall()]
+    incidents = [dict(r) for r in conn.execute(
+        "SELECT * FROM incidents ORDER BY id DESC").fetchall()]
+
     schedules = [dict(r) for r in conn.execute('''
         SELECT s.*, d.name as driver_name, v.plate as vehicle_plate, v.vehicle_type 
         FROM schedules s
@@ -282,7 +258,7 @@ def get_dashboard_data():
         JOIN vehicles v ON s.vehicle_id = v.id
         ORDER BY s.id DESC
     ''').fetchall()]
-    
+
     # Tính toán Ghi chú trễ giờ dựa trên dữ liệu camera quét thực tế
     notes = []
     for s in schedules:
@@ -297,7 +273,7 @@ def get_dashboard_data():
                 "title": f"Tài xế: {s['driver_name']} ({s['vehicle_plate']})",
                 "content": f"Xuất phát TRỄ so với lịch đăng ký ({dep_act} vs {dep_plan})"
             })
-            
+
         if ret_act and ret_plan and ret_act > ret_plan:
             notes.append({
                 "type": "danger",
@@ -319,6 +295,8 @@ def get_dashboard_data():
     })
 
 # --- API ĐĂNG KÝ LỊCH TRÌNH MỚI (CHỈ CẦN GIỜ DỰ KIẾN) ---
+
+
 @app.route('/api/schedules', methods=['POST'])
 def add_schedule():
     data = request.get_json()
@@ -328,14 +306,15 @@ def add_schedule():
            (driver_id, vehicle_id, departure_time, return_time, status) 
            VALUES (%s, %s, %s, %s, 'Chờ xuất bến')''',
         (
-            data['driver_id'], 
-            data['vehicle_id'], 
-            data['departure_time'], 
+            data['driver_id'],
+            data['vehicle_id'],
+            data['departure_time'],
             data.get('return_time', '')
         )
     )
     conn.commit()
     return jsonify({"success": True})
+
 
 @app.route('/api/schedules/<int:schedule_id>', methods=['DELETE'])
 def delete_schedule(schedule_id):
@@ -345,23 +324,25 @@ def delete_schedule(schedule_id):
     return jsonify({"success": True})
 
 # --- API NHẬN TÍN HIỆU TỰ ĐỘNG TỪ RASPBERRY PI 4 KHI XE RA/VÀO CỔNG ---
+
+
 @app.route('/api/gate-event', methods=['POST'])
 def handle_gate_event():
     data = request.get_json() or {}
     plate = data.get('plate')
     action = data.get('action', 'OUT')  # 'OUT': Xe ra cổng, 'IN': Xe vào bãi
     now_time = datetime.now().strftime('%H:%M')
-    
+
     conn = get_db()
     cursor = conn.cursor()
-    
+
     # Tìm lịch trình mới nhất của xe này
     schedule = cursor.execute('''
         SELECT s.id, s.status FROM schedules s
         JOIN vehicles v ON s.vehicle_id = v.id
         WHERE v.plate = %s ORDER BY s.id DESC LIMIT 1
     ''', (plate,)).fetchone()
-    
+
     if schedule:
         if action == 'OUT':
             cursor.execute('''
@@ -377,10 +358,12 @@ def handle_gate_event():
             ''', (now_time, schedule['id']))
         conn.commit()
         return jsonify({"success": True, "message": f"Cập nhật thời gian thực tế xe {plate} thành công lúc {now_time}"})
-    
+
     return jsonify({"success": False, "message": "Không tìm thấy lịch trình đăng ký cho xe này"}), 404
 
 # --- API TÀI XẾ & FACE DATASET ---
+
+
 @app.route('/api/drivers', methods=['POST'])
 def add_driver():
     data = request.get_json()
@@ -390,7 +373,7 @@ def add_driver():
         code = data['code']
         imgs = data.get('face_images', [])
         saved_paths = []
-        
+
         for idx, img_b64 in enumerate(imgs):
             if img_b64 and ',' in img_b64:
                 header, encoded = img_b64.split(',', 1)
@@ -408,12 +391,14 @@ def add_driver():
 
         cursor.execute(
             "INSERT INTO drivers (code, name, age, gender, phone, face_img1, face_img2, face_img3) VALUES (%s, %s, %s, %s, %s, %s, %s, %s)",
-            (code, data['name'], data.get('age'), data.get('gender', 'Nam'), data.get('phone', ''), saved_paths[0], saved_paths[1], saved_paths[2])
+            (code, data['name'], data.get('age'), data.get('gender', 'Nam'), data.get(
+                'phone', ''), saved_paths[0], saved_paths[1], saved_paths[2])
         )
         conn.commit()
         return jsonify({"success": True})
     except UniqueViolation:
         return jsonify({"success": False, "message": "Mã tài xế đã tồn tại!"}), 400
+
 
 @app.route('/api/drivers/<int:driver_id>', methods=['DELETE'])
 def delete_driver(driver_id):
@@ -422,10 +407,12 @@ def delete_driver(driver_id):
     conn.commit()
     return jsonify({"success": True})
 
+
 @app.route('/api/face-dataset', methods=['GET'])
 def get_face_dataset():
     conn = get_db()
-    drivers = conn.execute("SELECT code, name, face_img1, face_img2, face_img3 FROM drivers WHERE face_img1 IS NOT NULL").fetchall()
+    drivers = conn.execute(
+        "SELECT code, name, face_img1, face_img2, face_img3 FROM drivers WHERE face_img1 IS NOT NULL").fetchall()
     dataset = []
     for d in drivers:
         dataset.append({
@@ -439,9 +426,11 @@ def get_face_dataset():
         })
     return jsonify({"success": True, "dataset": dataset})
 
+
 @app.route('/face_dataset/<filename>')
 def serve_face_file(filename):
     return send_from_directory(UPLOADS_DIR, filename)
+
 
 @app.route('/api/vehicles', methods=['POST'])
 def add_vehicle():
@@ -456,6 +445,7 @@ def add_vehicle():
         return jsonify({"success": True})
     except UniqueViolation:
         return jsonify({"success": False, "message": "Biển số xe đã tồn tại!"}), 400
+
 
 @app.route('/api/vehicles/<int:vehicle_id>', methods=['DELETE'])
 def delete_vehicle(vehicle_id):
