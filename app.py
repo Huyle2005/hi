@@ -141,7 +141,9 @@ def send_otp_email(to_email, otp):
     mail_password = os.environ.get("MAIL_APP_PASSWORD")
 
     if not mail_address or not mail_password:
-        raise RuntimeError("Chưa cấu hình email gửi OTP trên Render")
+        raise RuntimeError(
+            "Chưa cấu hình email gửi OTP trên Render"
+        )
 
     msg = EmailMessage()
     msg["Subject"] = "Mã xác minh email - IUH Smart Parking"
@@ -157,7 +159,6 @@ def send_otp_email(to_email, otp):
     ) as smtp:
         smtp.login(mail_address, mail_password)
         smtp.send_message(msg)
-
 
 @app.route('/verify-email')
 def verify_email():
