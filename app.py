@@ -167,7 +167,220 @@ def verify_email():
     return render_template('verify_email.html')
 
 
+# --- XÁC MINH EMAIL TÀI XẾ BẰNG OTP ---
+
+@app.route('/send-login-otp', methods=['POST'])
+def send_login_otp():
+    user_id = session.get('pending_user_id')
+    if not user_id:
+        return jsonify(success=False, message="Phiên xác minh đã hết hạn. Vui lòng đăng nhập lại."), 401
+
+    data = request.get_json(silent=True) or {}
+    email = (data.get('email') or '').strip().lower()
+
+    if not re.fullmatch(r"[^@\s]+@[^@\s]+\.[^@\s]+", email):
+        return jsonify(success=False, message="Email không hợp lệ."), 400
+
+    now = time.time()
+    pending = pending_logins.get(user_id)
+
+    if pending and now - pending['sent_at'] < OTP_RESEND_SECONDS:
+        return jsonify(
+            success=False,
+            message="Vui lòng chờ 60 giây trước khi gửi mã mới."
+        ), 429
+
+    try:
+        with get_db() as conn:
+            user = conn.execute(
+                "SELECT id, email, email_verified FROM accounts WHERE id = %s",
+                (user_id,)
+            ).fetchone()
+
+            if not user:
+                session.clear()
+                return jsonify(success=False, message="Tài khoản không tồn tại."), 404
+
+            # Nếu tài khoản đã xác minh, không cho đổi email qua luồng OTP này.
+            if user['email_verified'] and user['email']:
+                return jsonify(
+                    success=False,
+                    message="Email tài khoản đã được xác minh."
+                ), 400
+
+            # Email không được gắn với tài khoản khác.
+            existing = conn.execute(
+                """
+                SELECT id FROM accounts
+                WHERE LOWER(email) = LOWER(%s) AND id <> %s
+                LIMIT 1
+                """,
+                (email, user_id)
+            ).fetchone()
+
+            if existing:
+                return jsonify(
+                    success=False,
+                    message="Email này đã được tài khoản khác sử dụng."
+                ), 409
+
+        otp = f"{secrets.randbelow(1000000):06d}"
+
+        # Gửi email trước; chỉ lưu OTP sau khi gửi thành công.
+        send_otp_email(email, otp)
+
+        pending_logins[user_id] = {
+            'email': email,
+            'otp_hash': hashlib.sha256(otp.encode()).hexdigest(),
+            'expires_at': now + OTP_EXPIRE_SECONDS,
+            'sent_at': now,
+            'attempts': 0
+        }
+
+        return jsonify(
+            success=True,
+            message="Đã gửi mã OTP đến email. Mã có hiệu lực trong 5 phút."
+        )
+
+    except Exception:
+        app.logger.exception("Lỗi gửi OTP xác minh email")
+        return jsonify(
+            success=False,
+            message="Không gửi được OTP. Hãy kiểm tra cấu hình email trên Render."
+        ), 500
+
+
+@app.route('/verify-login-otp', methods=['POST'])
+def verify_login_otp():
+    user_id = session.get('pending_user_id')
+    if not user_id:
+        return jsonify(
+            success=False,
+            message="Phiên xác minh đã hết hạn. Vui lòng đăng nhập lại."
+        ), 401
+
+    data = request.get_json(silent=True) or {}
+    otp = (data.get('otp') or '').strip()
+    pending = pending_logins.get(user_id)
+
+    if not pending:
+        return jsonify(
+            success=False,
+            message="Bạn cần yêu cầu gửi mã OTP trước."
+        ), 400
+
+    if time.time() > pending['expires_at']:
+        pending_logins.pop(user_id, None)
+        return jsonify(
+            success=False,
+            message="Mã OTP đã hết hạn. Hãy yêu cầu mã mới."
+        ), 400
+
+    if pending['attempts'] >= 5:
+        pending_logins.pop(user_id, None)
+        return jsonify(
+            success=False,
+            message="Bạn đã nhập sai quá 5 lần. Hãy yêu cầu mã mới."
+        ), 429
+
+    if not re.fullmatch(r"\d{6}", otp):
+        pending['attempts'] += 1
+        return jsonify(
+            success=False,
+            message="Vui lòng nhập OTP gồm 6 chữ số."
+        ), 400
+
+    otp_hash = hashlib.sha256(otp.encode()).hexdigest()
+    if not secrets.compare_digest(otp_hash, pending['otp_hash']):
+        pending['attempts'] += 1
+        return jsonify(
+            success=False,
+            message="Mã OTP không chính xác."
+        ), 400
+
+    try:
+        with get_db() as conn:
+            user = conn.execute(
+                "SELECT id, full_name, role, email, email_verified "
+                "FROM accounts WHERE id = %s FOR UPDATE",
+                (user_id,)
+            ).fetchone()
+
+            if not user:
+                pending_logins.pop(user_id, None)
+                session.clear()
+                return jsonify(
+                    success=False,
+                    message="Tài khoản không tồn tại."
+                ), 404
+
+            # Không ghi đè email đã được xác minh trong lúc chờ OTP.
+            if user['email_verified'] and user['email']:
+                pending_logins.pop(user_id, None)
+                session.clear()
+                return jsonify(
+                    success=False,
+                    message="Tài khoản đã có email được xác minh. Vui lòng đăng nhập lại."
+                ), 409
+
+            # Kiểm tra email lần nữa để tránh trùng do thay đổi đồng thời.
+            existing = conn.execute(
+                """
+                SELECT id FROM accounts
+                WHERE LOWER(email) = LOWER(%s) AND id <> %s
+                LIMIT 1
+                """,
+                (pending['email'], user_id)
+            ).fetchone()
+
+            if existing:
+                return jsonify(
+                    success=False,
+                    message="Email này đã được tài khoản khác sử dụng."
+                ), 409
+
+            conn.execute(
+                """
+                UPDATE accounts
+                SET email = %s, email_verified = TRUE
+                WHERE id = %s
+                """,
+                (pending['email'], user_id)
+            )
+
+        pending_logins.pop(user_id, None)
+
+        session.clear()
+        session.update(
+            user_id=user['id'],
+            full_name=user['full_name'],
+            role=user['role']
+        )
+
+        role = (user['role'] or '').strip().lower()
+        if role == 'driver':
+            destination = '/driver'
+        elif role in ['admin', 'quản lý hệ thống']:
+            destination = '/'
+        else:
+            session.clear()
+            return jsonify(
+                success=False,
+                message="Tài khoản chưa được cấp quyền."
+            ), 403
+
+        return jsonify(success=True, redirect=destination)
+
+    except Exception:
+        app.logger.exception("Lỗi xác minh và lưu email")
+        return jsonify(
+            success=False,
+            message="Không lưu được email. Vui lòng thử lại."
+        ), 500
+
 # --- AUTHENTICATION ---
+
+
 @app.route('/login', methods=['GET', 'POST'])
 def login():
     if request.method == 'POST':
