@@ -5,9 +5,11 @@ from flask import Flask, render_template, request, jsonify, session, redirect, u
 import psycopg
 from psycopg.rows import dict_row
 from psycopg.errors import UniqueViolation, ForeignKeyViolation
+from werkzeug.security import check_password_hash
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 TEMPLATE_DIR = os.path.join(BASE_DIR, 'templates')
 UPLOADS_DIR = os.path.join(BASE_DIR, 'face_dataset')
+
 
 if not os.path.exists(UPLOADS_DIR):
     os.makedirs(UPLOADS_DIR)
@@ -118,22 +120,26 @@ def init_db():
 @app.route('/login', methods=['GET', 'POST'])
 def login():
     if request.method == 'POST':
-        data = request.get_json()
-        username = data.get('username')
-        password = data.get('password')
-        
-        conn = get_db()
-        user = conn.execute("SELECT * FROM users WHERE username = %s AND password = %s", (username, password)).fetchone()
-        
-        if user or (username == 'admin' and password == 'admin@1234'):
-            session['user_id'] = 1
-            session['full_name'] = 'Nhóm 2 - DAKT'
-            session['role'] = 'Quản lý hệ thống'
-            return jsonify({"success": True, "redirect": "/"})
-            
-        return jsonify({"success": False, "message": "Sai tài khoản hoặc mật khẩu (Mật khẩu: admin@1234)"}), 400
-    return render_template('login.html')
+        data = request.get_json(silent=True) or {}
+        username, password = (data.get('username') or '').strip(), data.get('password') or ''
 
+        with get_db() as conn:
+            user = conn.execute("SELECT * FROM accounts WHERE username = %s", (username,)).fetchone()
+
+        if not user or not check_password_hash(user['password_hash'], password):
+            return jsonify({"success": False, "message": "Sai tài khoản hoặc mật khẩu"}), 400
+        if not user['email_verified']:
+            return jsonify({"success": False, "message": "Email chưa xác minh"}), 403
+
+        session.update(user_id=user['id'], full_name=user['full_name'], role=user['role'])
+        role = (user['role'] or '').strip().lower()
+
+        if role in ['admin', 'quản lý hệ thống']:
+            return jsonify({"success": True, "redirect": "/"})
+        if role == 'driver':
+            return jsonify({"success": True, "redirect": "/driver"})
+        return jsonify({"success": False, "message": "Tài khoản chưa được cấp quyền"}), 403
+    return render_template('login.html')
 @app.route('/logout')
 def logout():
     session.clear()
@@ -141,9 +147,15 @@ def logout():
 
 @app.route('/')
 def index():
-    if 'user_id' not in session:
-        return redirect(url_for('login'))
+    if 'user_id' not in session: return redirect(url_for('login'))
+    if (session.get('role') or '').strip().lower() not in ['admin', 'quản lý hệ thống']: return redirect(url_for('driver_page'))
     return render_template('index.html', user_name=session.get('full_name'), user_role=session.get('role'))
+
+@app.route('/driver')
+def driver_page():
+    if 'user_id' not in session: return redirect(url_for('login'))
+    if (session.get('role') or '').strip().lower() != 'driver': return redirect(url_for('index'))
+    return render_template('driver.html', user_name=session.get('full_name'), user_role=session.get('role'))
 
 # --- API DASHBOARD TỔNG QUAN ---
 @app.route('/api/dashboard', methods=['GET'])
