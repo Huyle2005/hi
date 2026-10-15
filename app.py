@@ -146,7 +146,12 @@ Nếu bạn không yêu cầu đăng ký, hãy bỏ qua email này.
         smtp.login(mail_address, mail_password)
         smtp.send_message(msg)
 
+@app.route('/verify-email')
+def verify_email():
+    if not session.get('pending_user_id'):
+        return redirect(url_for('login'))
 
+    return render_template('verify_email.html')
 @app.route('/register', methods=['POST'])
 def register():
     data = request.get_json(silent=True) or {}
@@ -224,8 +229,14 @@ def login():
         if not valid:
             return jsonify({"success": False, "message": "Sai tài khoản hoặc mật khẩu"}), 400
 
-        if not user['email_verified']:
-            return jsonify({"success": False, "message": "Email chưa xác minh"}), 403
+        # Chỉ yêu cầu OTP khi có email nhưng chưa xác minh
+        if not user['email']:
+            session.clear()
+            session['pending_user_id'] = user['id']
+            return jsonify({
+                "success": True,
+                "redirect": url_for('verify_email')
+            })
 
         session.update(user_id=user['id'], full_name=user['full_name'], role=user['role'])
         role = (user['role'] or '').strip().lower()
