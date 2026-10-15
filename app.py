@@ -47,6 +47,23 @@ def get_db():
     return psycopg.connect(database_url, row_factory=dict_row)
 
 
+
+def save_rfid_log(
+    rfid_uid,
+    tx=None,
+    event_type=None,
+    status="SUCCESS"
+):
+    with get_db() as conn:
+        conn.execute(
+            """
+            INSERT INTO rfid_logs
+                (rfid_uid, tx, event_type, status)
+            VALUES (%s, %s, %s, %s)
+            """,
+            (rfid_uid, tx, event_type, status)
+        )
+
 def init_db():
     with get_db() as conn:
         cursor = conn.cursor()
@@ -213,7 +230,7 @@ def send_login_otp():
                     success=False,
                     message="Email tài khoản đã được xác minh."
                 ), 400
-
+    
             # Email không được gắn với tài khoản khác.
             existing = conn.execute(
                 """
@@ -547,10 +564,36 @@ def delete_schedule(schedule_id):
 
 @app.route('/api/gate-event', methods=['POST'])
 def handle_gate_event():
-    data = request.get_json() or {}
+    
+    data = request.get_json(silent=True) or {}
+
     plate = data.get('plate')
-    action = data.get('action', 'OUT')  # 'OUT': Xe ra cổng, 'IN': Xe vào bãi
+    action = data.get('action', 'OUT').upper()
+
+    # Mã thẻ và TX do thiết bị gửi lên
+    rfid_uid = data.get('rfid_uid') or data.get('uid') or plate or 'UNKNOWN'
+    tx = data.get('tx')
+
     now_time = datetime.now().strftime('%H:%M')
+
+    if action not in ('IN', 'OUT'):
+        return jsonify({
+            "success": False,
+            "message": "action phải là IN hoặc OUT"
+        }), 400
+
+    if not plate:
+        save_rfid_log(
+            rfid_uid=rfid_uid,
+            tx=tx,
+            event_type=action,
+            status="MISSING_PLATE"
+        )
+        return jsonify({
+            "success": False,
+            "message": "Thiếu biển số xe"
+        }), 400
+
 
     conn = get_db()
     cursor = conn.cursor()
@@ -575,10 +618,36 @@ def handle_gate_event():
                 SET actual_ret_time = %s, status = 'Đã về bãi' 
                 WHERE id = %s
             ''', (now_time, schedule['id']))
-        conn.commit()
-        return jsonify({"success": True, "message": f"Cập nhật thời gian thực tế xe {plate} thành công lúc {now_time}"})
+        
+            conn.commit()
 
-    return jsonify({"success": False, "message": "Không tìm thấy lịch trình đăng ký cho xe này"}), 404
+            save_rfid_log(
+                rfid_uid=rfid_uid,
+                tx=tx,
+                event_type=action,
+                status="SUCCESS"
+            )
+
+            return jsonify({
+                "success": True,
+                "message": (
+                    f"Cập nhật thời gian thực tế xe {plate} "
+                    f"thành công lúc {now_time}"
+                )
+            })
+
+    
+    save_rfid_log(
+        rfid_uid=rfid_uid,
+        tx=tx,
+        event_type=action,
+        status="SCHEDULE_NOT_FOUND"
+    )
+
+    return jsonify({
+        "success": False,
+        "message": "Không tìm thấy lịch trình đăng ký cho xe này"
+    }), 404
 
 # --- API TÀI XẾ & FACE DATASET ---
 
