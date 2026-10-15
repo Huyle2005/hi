@@ -200,6 +200,10 @@ def register():
         return jsonify(success=False, message="Không gửi được mã xác minh. Vui lòng thử lại sau."), 500
 
 
+@app.route('/register', methods=['GET'])
+def register_page():
+    return render_template('register.html')
+
 @app.route('/verify-register', methods=['POST'])
 def verify_register():
     data = request.get_json(silent=True) or {}

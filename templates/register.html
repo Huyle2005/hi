@@ -184,7 +184,7 @@
                 msg.className = 'message ' + (res.ok && data.success ? 'success' : 'error');
                 msg.textContent = data.message || 'Có lỗi xảy ra.';
                 msg.style.display = 'block';
-                if (res.ok && data.success) setTimeout(() => location.href = data.redirect || '/login', 1500);
+                if(res.ok&&data.success)location.href='/login';
             } catch (e) {
                 msg.className = 'message error'; msg.textContent = 'Không thể kết nối máy chủ.'; msg.style.display = 'block';
             } finally { verifyBtn.disabled = false }
