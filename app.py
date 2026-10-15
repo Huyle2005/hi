@@ -5,7 +5,11 @@ from flask import Flask, render_template, request, jsonify, session, redirect, u
 import psycopg
 from psycopg.rows import dict_row
 from psycopg.errors import UniqueViolation, ForeignKeyViolation
-from werkzeug.security import check_password_hash
+
+from werkzeug.security import check_password_hash, generate_password_hash
+from email.message import EmailMessage
+import smtplib, secrets, time, re
+
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 TEMPLATE_DIR = os.path.join(BASE_DIR, 'templates')
 UPLOADS_DIR = os.path.join(BASE_DIR, 'face_dataset')
@@ -15,7 +19,12 @@ if not os.path.exists(UPLOADS_DIR):
     os.makedirs(UPLOADS_DIR)
 
 app = Flask(__name__, template_folder=TEMPLATE_DIR)
-app.secret_key = os.environ.get("SECRET_KEY")
+
+# OTP đăng ký tạm thời trong bộ nhớ máy chủ
+pending_registrations = {}
+OTP_EXPIRE_SECONDS = 300  # 5 phút
+OTP_RESEND_SECONDS = 60   # Chờ 60 giây mới gửi lại
+
 
 def get_db():
     database_url = os.environ.get("DATABASE_URL")
@@ -116,6 +125,119 @@ def init_db():
             cursor.executemany('INSERT INTO incidents (created_at, plate, driver_name, error_type, status) VALUES (%s, %s, %s, %s, %s)', [])
         conn.commit()
 
+
+def send_otp_email(to_email, otp):
+    mail_address = os.environ.get("MAIL_ADDRESS")
+    mail_password = os.environ.get("MAIL_APP_PASSWORD")
+    if not mail_address or not mail_password:
+        raise RuntimeError("Chưa cấu hình MAIL_ADDRESS hoặc MAIL_APP_PASSWORD trên Render")
+    msg = EmailMessage()
+    msg["Subject"] = "Mã xác minh đăng ký - IUH Smart Parking"
+    msg["From"] = mail_address
+    msg["To"] = to_email
+    msg.set_content(f"""Xin chào,
+
+Mã xác minh đăng ký IUH Smart Parking của bạn là: {otp}
+
+Mã có hiệu lực trong 5 phút. Không chia sẻ mã này với người khác.
+Nếu bạn không yêu cầu đăng ký, hãy bỏ qua email này.
+""")
+    with smtplib.SMTP_SSL("smtp.gmail.com", 465, timeout=20) as smtp:
+        smtp.login(mail_address, mail_password)
+        smtp.send_message(msg)
+
+
+@app.route('/register', methods=['POST'])
+def register():
+    data = request.get_json(silent=True) or {}
+    full_name = (data.get('full_name') or '').strip()
+    username = (data.get('username') or '').strip()
+    email = (data.get('email') or '').strip().lower()
+    password = data.get('password') or ''
+    confirm_password = data.get('confirm_password') or ''
+
+    if not all([full_name, username, email, password, confirm_password]):
+        return jsonify(success=False, message="Vui lòng nhập đầy đủ thông tin."), 400
+    if len(username) < 3 or len(username) > 50:
+        return jsonify(success=False, message="Tên đăng nhập phải từ 3 đến 50 ký tự."), 400
+    if not re.fullmatch(r"[^@\s]+@[^@\s]+\.[^@\s]+", email):
+        return jsonify(success=False, message="Email không hợp lệ."), 400
+    if len(password) < 8:
+        return jsonify(success=False, message="Mật khẩu phải có ít nhất 8 ký tự."), 400
+    if password != confirm_password:
+        return jsonify(success=False, message="Mật khẩu nhập lại không khớp."), 400
+
+    now = time.time()
+    pending = pending_registrations.get(email)
+    if pending and now - pending['sent_at'] < OTP_RESEND_SECONDS:
+        return jsonify(success=False, message="Vui lòng chờ 60 giây trước khi yêu cầu mã mới."), 429
+
+    try:
+        with get_db() as conn:
+            existing = conn.execute(
+                "SELECT 1 FROM accounts WHERE LOWER(username) = LOWER(%s) OR LOWER(email) = LOWER(%s) LIMIT 1",
+                (username, email)
+            ).fetchone()
+        if existing:
+            return jsonify(success=False, message="Tên đăng nhập hoặc email đã được sử dụng."), 409
+
+        otp = f"{secrets.randbelow(1000000):06d}"
+        pending_registrations[email] = {
+            'full_name': full_name,
+            'username': username,
+            'password_hash': generate_password_hash(password),
+            'email': email,
+            'otp_hash': __import__('hashlib').sha256(otp.encode()).hexdigest(),
+            'expires_at': now + OTP_EXPIRE_SECONDS,
+            'sent_at': now,
+            'attempts': 0
+        }
+        send_otp_email(email, otp)
+        return jsonify(success=True, message="Đã gửi mã xác minh 6 số đến email. Mã có hiệu lực 5 phút.")
+    except Exception:
+        app.logger.exception("Lỗi đăng ký hoặc gửi email OTP")
+        pending_registrations.pop(email, None)
+        return jsonify(success=False, message="Không gửi được mã xác minh. Vui lòng thử lại sau."), 500
+
+
+@app.route('/verify-register', methods=['POST'])
+def verify_register():
+    data = request.get_json(silent=True) or {}
+    email = (data.get('email') or '').strip().lower()
+    otp = (data.get('otp') or '').strip()
+    pending = pending_registrations.get(email)
+
+    if not pending:
+        return jsonify(success=False, message="Không tìm thấy đăng ký đang chờ. Vui lòng đăng ký lại."), 400
+    if time.time() > pending['expires_at']:
+        pending_registrations.pop(email, None)
+        return jsonify(success=False, message="Mã đã hết hạn. Vui lòng đăng ký lại."), 400
+    if pending['attempts'] >= 5:
+        pending_registrations.pop(email, None)
+        return jsonify(success=False, message="Bạn đã nhập sai quá 5 lần. Vui lòng đăng ký lại."), 429
+    if not re.fullmatch(r"\d{6}", otp):
+        return jsonify(success=False, message="Mã xác minh phải gồm đúng 6 chữ số."), 400
+
+    otp_hash = __import__('hashlib').sha256(otp.encode()).hexdigest()
+    if not secrets.compare_digest(otp_hash, pending['otp_hash']):
+        pending['attempts'] += 1
+        return jsonify(success=False, message="Mã xác minh không đúng."), 400
+
+    try:
+        with get_db() as conn:
+            conn.execute("""
+                INSERT INTO accounts (username, password_hash, full_name, email, role, email_verified)
+                VALUES (%s, %s, %s, %s, %s, TRUE)
+            """, (pending['username'], pending['password_hash'], pending['full_name'], email, 'driver'))
+        pending_registrations.pop(email, None)
+        return jsonify(success=True, message="Xác minh email thành công. Tài khoản đã được tạo.", redirect="/login")
+    except UniqueViolation:
+        pending_registrations.pop(email, None)
+        return jsonify(success=False, message="Tên đăng nhập hoặc email đã được sử dụng."), 409
+    except Exception:
+        app.logger.exception("Lỗi tạo tài khoản sau xác minh OTP")
+        return jsonify(success=False, message="Không tạo được tài khoản. Vui lòng thử lại."), 500
+
 # --- AUTHENTICATION ---
 @app.route('/login', methods=['GET', 'POST'])
 def login():
@@ -127,7 +249,17 @@ def login():
             user = conn.execute("SELECT * FROM accounts WHERE username = %s", (username,)).fetchone()
 
        
-        if not user or user['password_hash'] != password:
+        
+        if not user:
+            return jsonify({"success": False, "message": "Sai tài khoản hoặc mật khẩu"}), 400
+        stored_password = user['password_hash']
+        try:
+            valid = check_password_hash(stored_password, password)
+        except (ValueError, TypeError):
+            valid = False
+        if not valid and stored_password == password:
+            valid = True  # Tạm tương thích tài khoản cũ đang lưu mật khẩu dạng chữ thường
+        if not valid:
             return jsonify({"success": False, "message": "Sai tài khoản hoặc mật khẩu"}), 400
 
         if not user['email_verified']:

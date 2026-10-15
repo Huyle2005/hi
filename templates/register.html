@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="vi">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Đăng ký tài khoản - IUH Smart Parking</title>
+    <style>
+        * {
+            box-sizing: border-box
+        }
+
+        body {
+            margin: 0;
+            font-family: Arial, sans-serif;
+            background: linear-gradient(135deg, #0f172a, #1d4ed8);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px
+        }
+
+        .card {
+            background: white;
+            width: 100%;
+            max-width: 420px;
+            padding: 32px;
+            border-radius: 16px;
+            box-shadow: 0 15px 40px #0003
+        }
+
+        .logo {
+            text-align: center;
+            color: #1d4ed8;
+            font-size: 25px;
+            font-weight: bold
+        }
+
+        .sub {
+            text-align: center;
+            color: #64748b;
+            margin: 8px 0 24px
+        }
+
+        label {
+            display: block;
+            margin: 14px 0 6px;
+            font-size: 14px;
+            font-weight: bold;
+            color: #334155
+        }
+
+        input {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #cbd5e1;
+            border-radius: 8px;
+            font-size: 15px
+        }
+
+        input:focus {
+            outline: 2px solid #93c5fd;
+            border-color: #2563eb
+        }
+
+        button {
+            width: 100%;
+            margin-top: 22px;
+            padding: 13px;
+            background: #2563eb;
+            color: white;
+            border: 0;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer
+        }
+
+        button:disabled {
+            opacity: .6;
+            cursor: wait
+        }
+
+        .message {
+            display: none;
+            margin-top: 16px;
+            padding: 12px;
+            border-radius: 8px;
+            font-size: 14px
+        }
+
+        .error {
+            background: #fee2e2;
+            color: #991b1b
+        }
+
+        .success {
+            background: #dcfce7;
+            color: #166534
+        }
+
+        .links {
+            text-align: center;
+            margin-top: 20px;
+            font-size: 14px
+        }
+
+        .links a {
+            color: #2563eb;
+            text-decoration: none
+        }
+    </style>
+</head>
+
+<body>
+    <div class="card">
+        <div class="logo">IUH Smart Parking</div>
+        <div class="sub">Tạo tài khoản mới</div>
+        <form id="register-form">
+            <label for="full_name">Họ và tên</label>
+            <input id="full_name" name="full_name" required maxlength="100" autocomplete="name"
+                placeholder="Nhập họ và tên">
+            <label for="username">Tên đăng nhập</label>
+            <input id="username" name="username" required minlength="3" maxlength="50" autocomplete="username"
+                placeholder="Nhập tên đăng nhập">
+            <label for="email">Email</label>
+            <input id="email" name="email" type="email" required maxlength="254" autocomplete="email"
+                placeholder="example@gmail.com">
+            <label for="password">Mật khẩu</label>
+            <input id="password" name="password" type="password" required minlength="8" autocomplete="new-password"
+                placeholder="Ít nhất 8 ký tự">
+            <label for="confirm_password">Nhập lại mật khẩu</label>
+            <input id="confirm_password" name="confirm_password" type="password" required minlength="8"
+                autocomplete="new-password" placeholder="Nhập lại mật khẩu">
+            <button id="submit-btn" type="submit">Đăng ký</button>
+        </form>
+        <div id="message" class="message" role="alert"></div>
+        <div class="links">Đã có tài khoản? <a href="/login">Đăng nhập</a></div>
+
+        <div id="otp-section" style="display:none">
+            <label for="otp">Mã xác minh email </label>
+            <input id="otp" name="otp" inputmode="numeric" pattern="[0-9]{6}" maxlength="6"
+                placeholder="Nhập mã trong email">
+            <button type="button" id="verify-btn">Xác minh và tạo tài khoản</button>
+        </div>
+
+    </div>
+    <script>
+        const form = document.getElementById('register-form'), btn = document.getElementById('submit-btn'), msg = document.getElementById('message');
+        form.addEventListener('submit', async e => {
+            e.preventDefault();
+            const full_name = document.getElementById('full_name').value.trim(), username = document.getElementById('username').value.trim(), email = document.getElementById('email').value.trim(), password = document.getElementById('password').value, confirm_password = document.getElementById('confirm_password').value;
+            msg.style.display = 'none';
+            if (password !== confirm_password) { msg.className = 'message error'; msg.textContent = 'Mật khẩu nhập lại không khớp.'; msg.style.display = 'block'; return }
+            btn.disabled = true; btn.textContent = 'Đang đăng ký...';
+            try {
+                const res = await fetch('/register', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ full_name, username, email, password, confirm_password }) });
+                const data = await res.json();
+                msg.className = 'message ' + (res.ok && data.success ? 'success' : 'error');
+                msg.textContent = data.message || (res.ok ? 'Đăng ký thành công.' : 'Đăng ký thất bại.');
+                msg.style.display = 'block';
+
+                if (res.ok && data.success) {
+                    document.getElementById('otp-section').style.display = 'block';
+                    document.getElementById('email').readOnly = true;
+                    document.getElementById('password').readOnly = true;
+                    document.getElementById('confirm_password').readOnly = true;
+                }
+
+            } catch (err) { msg.className = 'message error'; msg.textContent = 'Không thể kết nối máy chủ. Vui lòng thử lại.'; msg.style.display = 'block' }
+            finally { btn.disabled = false; btn.textContent = 'Đăng ký' }
+        });
+
+        document.getElementById('verify-btn').addEventListener('click', async () => {
+            const email = document.getElementById('email').value.trim();
+            const otp = document.getElementById('otp').value.trim();
+            const verifyBtn = document.getElementById('verify-btn');
+            if (!/^\d{6}$/.test(otp)) { msg.className = 'message error'; msg.textContent = 'Vui lòng nhập đúng 6 chữ số.'; msg.style.display = 'block'; return }
+            verifyBtn.disabled = true;
+            try {
+                const res = await fetch('/verify-register', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ email, otp }) });
+                const data = await res.json();
+                msg.className = 'message ' + (res.ok && data.success ? 'success' : 'error');
+                msg.textContent = data.message || 'Có lỗi xảy ra.';
+                msg.style.display = 'block';
+                if (res.ok && data.success) setTimeout(() => location.href = data.redirect || '/login', 1500);
+            } catch (e) {
+                msg.className = 'message error'; msg.textContent = 'Không thể kết nối máy chủ.'; msg.style.display = 'block';
+            } finally { verifyBtn.disabled = false }
+        });
+
+    </script>
+</body>
+
+</html>
