@@ -4,292 +4,292 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Trung tâm vận hành - IUH Smart Parking</title>
-    <script src="https://cdn.tailwindcss.com"></script>
+    
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
 </head>
-<body class="bg-slate-100 text-slate-800 font-sans h-screen flex overflow-hidden">
+<body class="ui-001">
 
     <!-- SIDEBAR BÊN TRÁI -->
-    <aside class="w-64 bg-[#0a1931] text-white flex flex-col justify-between p-4 flex-shrink-0">
+    <aside class="ui-002">
         <div>
             <img src="{{ url_for('static', filename='images/logo.png') }}"
              alt="Logo IUH"
-             class="w-30 h-30 object-contain flex-shrink-0 border-2 border-white-500 rounded-xl p-2">
+             class="ui-003">
 
 
-            <div class="text-[11px] font-semibold text-slate-400 mb-2 px-2 uppercase tracking-wider">Trung tâm vận hành</div>
+            <div class="ui-004">Trung tâm vận hành</div>
 
-            <nav class="space-y-1 text-sm font-medium">
-                <button onclick="switchTab('overview')" id="nav-overview" class="w-full flex items-center space-x-3 px-3 py-2.5 rounded-xl bg-blue-600 text-white transition">
-                    <i class="fa-solid fa-gauge-high w-5"></i><span>Tổng quan</span>
+            <nav class="ui-005">
+                <button onclick="switchTab('overview')" id="nav-overview" class="ui-006">
+                    <i class="ui-007"></i><span>Tổng quan</span>
                 </button>
-                <button onclick="switchTab('schedules')" id="nav-schedules" class="w-full flex items-center space-x-3 px-3 py-2.5 rounded-xl text-slate-300 hover:bg-slate-800 transition">
-                    <i class="fa-solid fa-calendar-days w-5"></i><span>Quản lý Lịch trình</span>
+                <button onclick="switchTab('schedules')" id="nav-schedules" class="ui-008">
+                    <i class="ui-009"></i><span>Quản lý Lịch trình</span>
                 </button>
-                <button onclick="switchTab('drivers')" id="nav-drivers" class="w-full flex items-center space-x-3 px-3 py-2.5 rounded-xl text-slate-300 hover:bg-slate-800 transition">
-                    <i class="fa-solid fa-users w-5"></i><span>Quản lý Tài xế</span>
+                <button onclick="switchTab('drivers')" id="nav-drivers" class="ui-008">
+                    <i class="ui-010"></i><span>Quản lý Tài xế</span>
                 </button>
-                <button onclick="switchTab('vehicles')" id="nav-vehicles" class="w-full flex items-center space-x-3 px-3 py-2.5 rounded-xl text-slate-300 hover:bg-slate-800 transition">
-                    <i class="fa-solid fa-truck w-5"></i><span>Quản lý Xe</span>
+                <button onclick="switchTab('vehicles')" id="nav-vehicles" class="ui-008">
+                    <i class="ui-011"></i><span>Quản lý Xe</span>
                 </button>
             </nav>
         </div>
 
-        <div class="space-y-3">
-            <div class="bg-slate-800/60 p-3 rounded-xl text-xs space-y-1 border border-slate-700">
-                <div class="flex items-center space-x-2 text-emerald-400 font-medium">
-                    <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+        <div class="ui-012">
+            <div class="ui-013">
+                <div class="ui-014">
+                    <span class="ui-015"></span>
                     <span>AI Sync Pi 4 Ready</span>
                 </div>
             </div>
 
-            <a href="/logout" class="flex items-center justify-center space-x-2 w-full bg-red-600/20 text-red-400 hover:bg-red-600 hover:text-white p-2 rounded-xl text-xs font-bold transition">
-                <i class="fa-solid fa-right-from-bracket"></i><span>Đăng xuất</span>
+            <a href="/logout" class="ui-016">
+                <i class="ui-017"></i><span>Đăng xuất</span>
             </a>
         </div>
     </aside>
 
     <!-- MAIN CONTENT -->
-    <main class="flex-1 flex flex-col overflow-y-auto">
-        <header class="bg-white border-b px-6 py-3 flex items-center justify-between sticky top-0 z-10 shadow-sm">
-            <h1 id="page-title" class="text-xl font-bold text-slate-800">Tổng quan hệ thống</h1>
+    <main class="ui-018">
+        <header class="ui-019">
+            <h1 id="page-title" class="ui-020">Tổng quan hệ thống</h1>
 
-            <div class="flex items-center space-x-3 border-l pl-4">
-                <div class="text-right">
-                    <div class="text-sm font-bold text-blue-900">{{ user_name }}</div>
-                    <div class="text-xs text-slate-500">{{ user_role }}</div>
+            <div class="ui-021">
+                <div class="ui-022">
+                    <div class="ui-023">{{ user_name }}</div>
+                    <div class="ui-024">{{ user_role }}</div>
                 </div>
-                <div class="w-9 h-9 bg-blue-600 text-white font-bold rounded-full flex items-center justify-center text-sm shadow">
+                <div class="ui-025">
                     N2
                 </div>
             </div>
         </header>
 
         <!-- VIEW 1: TỔNG QUAN -->
-        <div id="view-overview" class="p-6 space-y-6">
-            <div class="grid grid-cols-3 gap-6">
-                <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm flex items-center justify-between">
+        <div id="view-overview" class="ui-026">
+            <div class="ui-027">
+                <div class="ui-028">
                     <div>
-                        <div class="text-xs text-slate-500 font-medium">TỔNG PHƯƠNG TIỆN</div>
-                        <div id="kpi-vehicles" class="text-2xl font-bold text-slate-800">0</div>
+                        <div class="ui-029">TỔNG PHƯƠNG TIỆN</div>
+                        <div id="kpi-vehicles" class="ui-030">0</div>
                     </div>
-                    <div class="w-10 h-10 bg-blue-100 text-blue-600 rounded-xl flex items-center justify-center font-bold"><i class="fa-solid fa-truck"></i></div>
+                    <div class="ui-031"><i class="ui-032"></i></div>
                 </div>
 
-                <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm flex items-center justify-between">
+                <div class="ui-028">
                     <div>
-                        <div class="text-xs text-slate-500 font-medium">LỊCH TRÌNH ĐANG CHẠY</div>
-                        <div id="kpi-schedules" class="text-2xl font-bold text-emerald-600">0</div>
+                        <div class="ui-029">LỊCH TRÌNH ĐANG CHẠY</div>
+                        <div id="kpi-schedules" class="ui-033">0</div>
                     </div>
-                    <div class="w-10 h-10 bg-emerald-100 text-emerald-600 rounded-xl flex items-center justify-center font-bold"><i class="fa-solid fa-route"></i></div>
+                    <div class="ui-034"><i class="ui-035"></i></div>
                 </div>
 
-                <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm flex items-center justify-between">
+                <div class="ui-028">
                     <div>
-                        <div class="text-xs text-slate-500 font-medium">SỰ CỐ CẦN XỬ LÝ</div>
-                        <div id="kpi-incidents" class="text-2xl font-bold text-amber-600">0</div>
+                        <div class="ui-029">SỰ CỐ CẦN XỬ LÝ</div>
+                        <div id="kpi-incidents" class="ui-036">0</div>
                     </div>
-                    <div class="w-10 h-10 bg-amber-100 text-amber-600 rounded-xl flex items-center justify-center font-bold"><i class="fa-solid fa-triangle-exclamation"></i></div>
+                    <div class="ui-037"><i class="ui-038"></i></div>
                 </div>
             </div>
 
-            <div class="grid grid-cols-3 gap-6">
-                <div class="col-span-2 bg-white p-5 rounded-xl border border-slate-200 shadow-sm space-y-4">
-                    <div class="flex justify-between items-center">
-                        <h2 class="font-bold text-slate-800 text-base">Lịch trình sơ bộ xe xuất bến / về bãi</h2>
-                        <button onclick="switchTab('schedules')" class="text-xs text-blue-600 font-semibold hover:underline">Xem chi tiết &gt;</button>
+            <div class="ui-027">
+                <div class="ui-039">
+                    <div class="ui-040">
+                        <h2 class="ui-041">Lịch trình sơ bộ xe xuất bến / về bãi</h2>
+                        <button onclick="switchTab('schedules')" class="ui-042">Xem chi tiết &gt;</button>
                     </div>
 
-                    <div class="overflow-x-auto">
-                        <table class="w-full text-left text-xs">
+                    <div class="ui-043">
+                        <table class="ui-044">
                             <thead>
-                                <tr class="border-b text-slate-400 font-semibold uppercase">
-                                    <th class="pb-3">TÀI XẾ</th>
-                                    <th class="pb-3">BIỂN SỐ</th>
-                                    <th class="pb-3">XUẤT BẾN (DK / TT)</th>
-                                    <th class="pb-3">VỀ BÃI (DK / TT)</th>
-                                    <th class="pb-3">TRẠNG THÁI</th>
+                                <tr class="ui-045">
+                                    <th class="ui-046">TÀI XẾ</th>
+                                    <th class="ui-046">BIỂN SỐ</th>
+                                    <th class="ui-046">XUẤT BẾN (DK / TT)</th>
+                                    <th class="ui-046">VỀ BÃI (DK / TT)</th>
+                                    <th class="ui-046">TRẠNG THÁI</th>
                                 </tr>
                             </thead>
-                            <tbody id="overview-schedules-list" class="divide-y"></tbody>
+                            <tbody id="overview-schedules-list" class="ui-047"></tbody>
                         </table>
                     </div>
                 </div>
 
                 <!-- GHI CHÚ TRỄ GIỜ -->
-                <div class="bg-white p-5 rounded-xl border border-slate-200 shadow-sm space-y-4">
-                    <div class="flex justify-between items-center">
-                        <h2 class="font-bold text-slate-800 text-base">Ghi chú trễ giờ</h2>
-                        <i class="fa-solid fa-bell text-amber-500 text-xs"></i>
+                <div class="ui-048">
+                    <div class="ui-040">
+                        <h2 class="ui-041">Ghi chú trễ giờ</h2>
+                        <i class="ui-049"></i>
                     </div>
-                    <div id="notes-container" class="space-y-3 max-h-80 overflow-y-auto"></div>
+                    <div id="notes-container" class="ui-050"></div>
                 </div>
             </div>
         </div>
 
         <!-- VIEW 2: QUẢN LÝ LỊCH TRÌNH -->
-        <div id="view-schedules" class="p-6 space-y-6 hidden">
+        <div id="view-schedules" class="ui-051">
             <!-- FORM ĐĂNG KÝ KẾ HOẠCH (GỌN GÀNG, ĐÚNG THỰC TẾ) -->
-            <div class="bg-white p-5 rounded-xl border border-slate-200 shadow-sm space-y-4">
-                <h2 class="font-bold text-slate-800 text-base">Tạo Lịch Trình Xe Mới</h2>
-                <form id="add-schedule-form" class="grid grid-cols-5 gap-4 text-xs">
+            <div class="ui-048">
+                <h2 class="ui-041">Tạo Lịch Trình Xe Mới</h2>
+                <form id="add-schedule-form" class="ui-052">
                     <div>
-                        <label class="block mb-1 text-slate-500 font-semibold">Tài xế</label>
-                        <select id="schedule-driver-id" class="w-full p-2 border rounded-lg outline-none" required></select>
+                        <label class="ui-053">Tài xế</label>
+                        <select id="schedule-driver-id" class="ui-054" required></select>
                     </div>
                     <div>
-                        <label class="block mb-1 text-slate-500 font-semibold">Biển số xe</label>
-                        <select id="schedule-vehicle-id" class="w-full p-2 border rounded-lg outline-none" required></select>
+                        <label class="ui-053">Biển số xe</label>
+                        <select id="schedule-vehicle-id" class="ui-054" required></select>
                     </div>
                     <div>
-                        <label class="block mb-1 text-slate-500 font-semibold">Giờ xuất bến (Dự kiến)</label>
-                        <input type="time" id="schedule-dep-time" class="w-full p-2 border rounded-lg outline-none" required>
+                        <label class="ui-053">Giờ xuất bến (Dự kiến)</label>
+                        <input type="time" id="schedule-dep-time" class="ui-054" required>
                     </div>
                     <div>
-                        <label class="block mb-1 text-slate-500 font-semibold">Giờ về bãi (Dự kiến)</label>
-                        <input type="time" id="schedule-ret-time" class="w-full p-2 border rounded-lg outline-none">
+                        <label class="ui-053">Giờ về bãi (Dự kiến)</label>
+                        <input type="time" id="schedule-ret-time" class="ui-054">
                     </div>
-                    <div class="flex items-end">
-                        <button type="submit" class="w-full bg-blue-600 text-white p-2 rounded-lg font-bold hover:bg-blue-700 transition">Tạo Lịch Trình</button>
+                    <div class="ui-055">
+                        <button type="submit" class="ui-056">Tạo Lịch Trình</button>
                     </div>
                 </form>
             </div>
 
-            <div class="bg-white p-5 rounded-xl border border-slate-200 shadow-sm">
-                <h2 class="font-bold text-slate-800 text-base mb-4">Danh Sách Lịch Trình Chi Tiết</h2>
-                <table class="w-full text-left text-xs">
+            <div class="ui-057">
+                <h2 class="ui-058">Danh Sách Lịch Trình Chi Tiết</h2>
+                <table class="ui-044">
                     <thead>
-                        <tr class="border-b text-slate-400 font-semibold uppercase">
-                            <th class="pb-3">TÀI XẾ</th>
-                            <th class="pb-3">BIỂN SỐ XE</th>
-                            <th class="pb-3">XUẤT BẾN (DK)</th>
-                            <th class="pb-3">XUẤT BẾN (TT)</th>
-                            <th class="pb-3">VỀ BÃI (DK)</th>
-                            <th class="pb-3">VỀ BÃI (TT)</th>
-                            <th class="pb-3">TRẠNG THÁI</th>
-                            <th class="pb-3 text-right">THAO TÁC</th>
+                        <tr class="ui-045">
+                            <th class="ui-046">TÀI XẾ</th>
+                            <th class="ui-046">BIỂN SỐ XE</th>
+                            <th class="ui-046">XUẤT BẾN (DK)</th>
+                            <th class="ui-046">XUẤT BẾN (TT)</th>
+                            <th class="ui-046">VỀ BÃI (DK)</th>
+                            <th class="ui-046">VỀ BÃI (TT)</th>
+                            <th class="ui-046">TRẠNG THÁI</th>
+                            <th class="ui-059">THAO TÁC</th>
                         </tr>
                     </thead>
-                    <tbody id="full-schedules-list" class="divide-y"></tbody>
+                    <tbody id="full-schedules-list" class="ui-047"></tbody>
                 </table>
             </div>
         </div>
 
         <!-- VIEW 3: QUẢN LÝ TÀI XẾ -->
-        <div id="view-drivers" class="p-6 space-y-6 hidden">
-            <div class="bg-white p-5 rounded-xl border border-slate-200 shadow-sm space-y-4">
-                <div class="flex justify-between items-center">
-                    <h2 class="font-bold text-slate-800 text-base">Đăng Ký Tài Xế & Quét Khuôn Mặt AI</h2>
-                    <button type="button" onclick="openCameraModal()" class="bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2 rounded-lg font-bold text-xs flex items-center space-x-2">
-                        <i class="fa-solid fa-camera"></i><span>Mở Webcam Quét Face 3 Góc</span>
+        <div id="view-drivers" class="ui-051">
+            <div class="ui-048">
+                <div class="ui-040">
+                    <h2 class="ui-041">Đăng Ký Tài Xế & Quét Khuôn Mặt AI</h2>
+                    <button type="button" onclick="openCameraModal()" class="ui-060">
+                        <i class="ui-061"></i><span>Mở Webcam Quét Face 3 Góc</span>
                     </button>
                 </div>
 
-                <form id="add-driver-form" class="grid grid-cols-4 gap-4 text-xs">
-                    <input type="text" id="driver-code" placeholder="Mã TX (vd: TX003)" class="p-2 border rounded-lg outline-none" required>
-                    <input type="text" id="driver-name" placeholder="Họ và Tên" class="p-2 border rounded-lg outline-none" required>
-                    <input type="number" id="driver-age" placeholder="Tuổi" class="p-2 border rounded-lg outline-none" min="18" max="60" step="1" required>
-                    <select id="driver-gender" class="p-2 border rounded-lg outline-none">
+                <form id="add-driver-form" class="ui-062">
+                    <input type="text" id="driver-code" placeholder="Mã TX (vd: TX003)" class="ui-063" required>
+                    <input type="text" id="driver-name" placeholder="Họ và Tên" class="ui-063" required>
+                    <input type="number" id="driver-age" placeholder="Tuổi" class="ui-063" min="18" max="60" step="1" required>
+                    <select id="driver-gender" class="ui-063">
                         <option value="Nam">Nam</option>
                         <option value="Nữ">Nữ</option>
                     </select>
 
-                    <div class="col-span-4 flex items-center space-x-4 border-t pt-3">
-                        <span class="text-xs font-semibold text-slate-600">Trạng thái ảnh mặt:</span>
-                        <div id="face-status-badge" class="text-xs bg-amber-100 text-amber-800 px-3 py-1 rounded-full font-bold">
+                    <div class="ui-064">
+                        <span class="ui-065">Trạng thái ảnh mặt:</span>
+                        <div id="face-status-badge" class="ui-066">
                             Chưa quét khuôn mặt (Cần quét 3 góc)
                         </div>
-                        <button type="submit" class="ml-auto bg-blue-600 text-white px-6 py-2 rounded-lg font-bold hover:bg-blue-700">Lưu Tài Xế</button>
+                        <button type="submit" class="ui-067">Lưu Tài Xế</button>
                     </div>
                 </form>
             </div>
 
-            <div class="bg-white p-5 rounded-xl border border-slate-200 shadow-sm">
-                <h2 class="font-bold text-slate-800 text-base mb-4">Danh sách Tài xế & Trạng thái Face Dataset</h2>
-                <table class="w-full text-left text-xs">
+            <div class="ui-057">
+                <h2 class="ui-058">Danh sách Tài xế & Trạng thái Face Dataset</h2>
+                <table class="ui-044">
                     <thead>
-                        <tr class="border-b text-slate-400 font-semibold">
-                            <th class="pb-3">MÃ TX</th>
-                            <th class="pb-3">HỌ VÀ TÊN</th>
-                            <th class="pb-3">TUỔI / GIỚI TÍNH</th>
-                            <th class="pb-3">KHUÔN MẶT AI</th>
-                            <th class="pb-3 text-right">THAO TÁC</th>
+                        <tr class="ui-068">
+                            <th class="ui-046">MÃ TX</th>
+                            <th class="ui-046">HỌ VÀ TÊN</th>
+                            <th class="ui-046">TUỔI / GIỚI TÍNH</th>
+                            <th class="ui-046">KHUÔN MẶT AI</th>
+                            <th class="ui-059">THAO TÁC</th>
                         </tr>
                     </thead>
-                    <tbody id="drivers-list" class="divide-y"></tbody>
+                    <tbody id="drivers-list" class="ui-047"></tbody>
                 </table>
             </div>
         </div>
 
         <!-- VIEW 4: QUẢN LÝ XE -->
-        <div id="view-vehicles" class="p-6 space-y-6 hidden">
-            <div class="bg-white p-5 rounded-xl border border-slate-200 shadow-sm space-y-4">
-                <h2 class="font-bold text-slate-800 text-base">Thêm Phương Tiện Mới</h2>
-                <form id="add-vehicle-form" class="grid grid-cols-3 gap-4 text-xs">
-                    <input type="text" id="vehicle-plate" placeholder="Biển số (vd: 59C-999.99)" class="p-2 border rounded-lg outline-none" required>
-                    <select id="vehicle-type" class="p-2 border rounded-lg outline-none">
+        <div id="view-vehicles" class="ui-051">
+            <div class="ui-048">
+                <h2 class="ui-041">Thêm Phương Tiện Mới</h2>
+                <form id="add-vehicle-form" class="ui-069">
+                    <input type="text" id="vehicle-plate" placeholder="Biển số (vd: 59C-999.99)" class="ui-063" required>
+                    <select id="vehicle-type" class="ui-063">
                         <option value="Xe 16 chỗ">Xe 16 chỗ</option>
                         <option value="Xe tải">Xe tải</option>
                         <option value="Xe khác">Xe khác</option>
                     </select>
-                    <button type="submit" class="bg-blue-600 text-white rounded-lg font-bold hover:bg-blue-700 transition">Thêm Xe</button>
+                    <button type="submit" class="ui-070">Thêm Xe</button>
                 </form>
             </div>
 
-            <div class="bg-white p-5 rounded-xl border border-slate-200 shadow-sm">
-                <h2 class="font-bold text-slate-800 text-base mb-4">Danh sách Phương tiện</h2>
-                <table class="w-full text-left text-xs">
+            <div class="ui-057">
+                <h2 class="ui-058">Danh sách Phương tiện</h2>
+                <table class="ui-044">
                     <thead>
-                        <tr class="border-b text-slate-400 font-semibold">
-                            <th class="pb-3">BIỂN SỐ XE</th>
-                            <th class="pb-3">LOẠI XE</th>
-                            <th class="pb-3 text-right">THAO TÁC</th>
+                        <tr class="ui-068">
+                            <th class="ui-046">BIỂN SỐ XE</th>
+                            <th class="ui-046">LOẠI XE</th>
+                            <th class="ui-059">THAO TÁC</th>
                         </tr>
                     </thead>
-                    <tbody id="vehicles-list" class="divide-y"></tbody>
+                    <tbody id="vehicles-list" class="ui-047"></tbody>
                 </table>
             </div>
         </div>
     </main>
 
     <!-- MODAL POPUP CAMERA -->
-    <div id="camera-modal" class="fixed inset-0 bg-slate-900/80 backdrop-blur-sm z-50 flex items-center justify-center hidden">
-        <div class="bg-white w-full max-w-xl p-6 rounded-2xl shadow-2xl space-y-4 relative">
-            <div class="flex justify-between items-center border-b pb-3">
-                <h3 class="font-bold text-slate-800 text-sm flex items-center space-x-2">
-                    <i class="fa-solid fa-camera-retro text-blue-600"></i>
+    <div id="camera-modal" class="ui-071">
+        <div class="ui-072">
+            <div class="ui-073">
+                <h3 class="ui-074">
+                    <i class="ui-075"></i>
                     <span>Chụp Khựng Frame 3 Góc Khuôn Mặt Tài Xế</span>
                 </h3>
-                <button onclick="closeCameraModal()" class="text-slate-400 hover:text-slate-600"><i class="fa-solid fa-xmark text-lg"></i></button>
+                <button onclick="closeCameraModal()" class="ui-076"><i class="ui-077"></i></button>
             </div>
 
-            <div class="relative bg-black rounded-xl overflow-hidden aspect-video flex items-center justify-center" id="cam-box">
-                <video id="webcam" autoplay playsinline class="w-full h-full object-cover"></video>
-                <div id="cam-overlay" class="absolute inset-0 border-2 border-dashed border-emerald-400/70 rounded-xl pointer-events-none flex items-center justify-center">
-                    <span id="guide-text" class="bg-black/60 text-white text-xs px-4 py-1.5 rounded-full font-bold">1. Nhìn THẲNG vào camera</span>
-                </div>
-            </div>
-
-            <div class="grid grid-cols-3 gap-3 text-center text-xs">
-                <div class="border p-2 rounded-xl bg-slate-50">
-                    <span class="font-semibold block mb-1">Góc 1: Nhìn Thẳng</span>
-                    <img id="prev-1" class="w-full h-20 object-cover rounded bg-slate-200 border">
-                </div>
-                <div class="border p-2 rounded-xl bg-slate-50">
-                    <span class="font-semibold block mb-1">Góc 2: Nghiêng Trái</span>
-                    <img id="prev-2" class="w-full h-20 object-cover rounded bg-slate-200 border">
-                </div>
-                <div class="border p-2 rounded-xl bg-slate-50">
-                    <span class="font-semibold block mb-1">Góc 3: Nghiêng Phải</span>
-                    <img id="prev-3" class="w-full h-20 object-cover rounded bg-slate-200 border">
+            <div class="ui-078" id="cam-box">
+                <video id="webcam" autoplay playsinline class="ui-079"></video>
+                <div id="cam-overlay" class="ui-080">
+                    <span id="guide-text" class="ui-081">1. Nhìn THẲNG vào camera</span>
                 </div>
             </div>
 
-            <div class="flex justify-between items-center border-t pt-3">
-                <button type="button" onclick="resetCapture()" class="text-xs text-slate-500 hover:underline">Chụp lại từ đầu</button>
-                <button type="button" id="btn-capture-step" onclick="captureNextAngle()" class="bg-blue-600 hover:bg-blue-700 text-white px-5 py-2 rounded-xl text-xs font-bold flex items-center space-x-2">
-                    <i class="fa-solid fa-camera"></i><span>Chụp Frame 1 (Thẳng)</span>
+            <div class="ui-082">
+                <div class="ui-083">
+                    <span class="ui-084">Góc 1: Nhìn Thẳng</span>
+                    <img id="prev-1" class="ui-085">
+                </div>
+                <div class="ui-083">
+                    <span class="ui-084">Góc 2: Nghiêng Trái</span>
+                    <img id="prev-2" class="ui-085">
+                </div>
+                <div class="ui-083">
+                    <span class="ui-084">Góc 3: Nghiêng Phải</span>
+                    <img id="prev-3" class="ui-085">
+                </div>
+            </div>
+
+            <div class="ui-086">
+                <button type="button" onclick="resetCapture()" class="ui-087">Chụp lại từ đầu</button>
+                <button type="button" id="btn-capture-step" onclick="captureNextAngle()" class="ui-088">
+                    <i class="ui-061"></i><span>Chụp Frame 1 (Thẳng)</span>
                 </button>
             </div>
         </div>
@@ -304,10 +304,10 @@
         function switchTab(tab) {
             ['overview', 'schedules', 'drivers', 'vehicles'].forEach(t => {
                 document.getElementById(`view-${t}`).classList.add('hidden');
-                document.getElementById(`nav-${t}`).className = "w-full flex items-center space-x-3 px-3 py-2.5 rounded-xl text-slate-300 hover:bg-slate-800 transition";
+                document.getElementById(`nav-${t}`).className = "ui-008";
             });
             document.getElementById(`view-${tab}`).classList.remove('hidden');
-            document.getElementById(`nav-${tab}`).className = "w-full flex items-center space-x-3 px-3 py-2.5 rounded-xl bg-blue-600 text-white transition";
+            document.getElementById(`nav-${tab}`).className = "ui-006";
         }
 
         async function openCameraModal() {
@@ -346,15 +346,15 @@
 
             if (currentStep === 1) {
                 guide.innerText = "2. Quay mặt NGHIÊNG TRÁI nhẹ";
-                btn.innerHTML = '<i class="fa-solid fa-camera"></i><span>Chụp Frame 2 (Nghiêng Trái)</span>';
+                btn.innerHTML = '<i class="ui-061"></i><span>Chụp Frame 2 (Nghiêng Trái)</span>';
             } else if (currentStep === 2) {
                 guide.innerText = "3. Quay mặt NGHIÊNG PHẢI nhẹ";
-                btn.innerHTML = '<i class="fa-solid fa-camera"></i><span>Chụp Frame 3 (Nghiêng Phải)</span>';
+                btn.innerHTML = '<i class="ui-061"></i><span>Chụp Frame 3 (Nghiêng Phải)</span>';
             } else if (currentStep === 3) {
                 guide.innerText = "✅ Đã thu thập đủ 3 góc mặt!";
-                btn.className = "bg-emerald-600 text-white px-5 py-2 rounded-xl text-xs font-bold";
+                btn.className = "ui-107";
                 btn.innerText = "Hoàn Tất Quét Khuôn Mặt";
-                document.getElementById('face-status-badge').className = "text-xs bg-emerald-100 text-emerald-800 px-3 py-1 rounded-full font-bold";
+                document.getElementById('face-status-badge').className = "ui-108";
                 document.getElementById('face-status-badge').innerText = "✅ Đã thu thập đủ 3 góc khuôn mặt";
                 setTimeout(closeCameraModal, 1000);
             }
@@ -373,7 +373,7 @@
             btn.className =
                 'bg-blue-600 hover:bg-blue-700 text-white px-5 py-2 rounded-xl text-xs font-bold flex items-center space-x-2';
             btn.innerHTML =
-                '<i class="fa-solid fa-camera"></i><span>Chụp Frame 1 (Thẳng)</span>';
+                '<i class="ui-061"></i><span>Chụp Frame 1 (Thẳng)</span>';
             const badge = document.getElementById('face-status-badge');
             badge.className ='text-xs bg-amber-100 text-amber-800 px-3 py-1 rounded-full font-bold';
             badge.innerText = 'Chưa quét khuôn mặt (Cần quét 3 góc)';
@@ -391,24 +391,24 @@
             // Render Ghi chú trễ giờ
             const notesContainer = document.getElementById('notes-container');
             if (data.notes.length === 0) {
-                notesContainer.innerHTML = '<div class="text-xs text-slate-400 p-3 bg-slate-50 rounded-lg">Không có ghi chú trễ giờ nào.</div>';
+                notesContainer.innerHTML = '<div class="ui-089">Không có ghi chú trễ giờ nào.</div>';
             } else {
                 notesContainer.innerHTML = data.notes.map(n => `
-                    <div class="p-3 bg-amber-50 border border-amber-200 rounded-xl space-y-1">
-                        <div class="text-xs font-bold text-amber-900">${n.title}</div>
-                        <div class="text-[11px] text-amber-800">${n.content}</div>
+                    <div class="ui-090">
+                        <div class="ui-091">${n.title}</div>
+                        <div class="ui-092">${n.content}</div>
                     </div>
                 `).join('');
             }
 
             // Render Lịch trình sơ bộ
             document.getElementById('overview-schedules-list').innerHTML = data.schedules.slice(0, 5).map(s => `
-                <tr class="hover:bg-slate-50">
-                    <td class="py-3 font-bold text-slate-800">${s.driver_name}</td>
-                    <td class="py-3 font-semibold text-blue-600">${s.vehicle_plate}</td>
-                    <td class="py-3 text-slate-600">${s.departure_time} ${s.actual_dep_time ? `<span class="font-bold text-emerald-600">(${s.actual_dep_time})</span>` : ''}</td>
-                    <td class="py-3 text-slate-600">${s.return_time || '---'} ${s.actual_ret_time ? `<span class="font-bold text-emerald-600">(${s.actual_ret_time})</span>` : ''}</td>
-                    <td class="py-3"><span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-blue-100 text-blue-800">${s.status}</span></td>
+                <tr class="ui-093">
+                    <td class="ui-094">${s.driver_name}</td>
+                    <td class="ui-095">${s.vehicle_plate}</td>
+                    <td class="ui-096">${s.departure_time} ${s.actual_dep_time ? `<span class="ui-097">(${s.actual_dep_time})</span>` : ''}</td>
+                    <td class="ui-096">${s.return_time || '---'} ${s.actual_ret_time ? `<span class="ui-097">(${s.actual_ret_time})</span>` : ''}</td>
+                    <td class="ui-098"><span class="ui-099">${s.status}</span></td>
                 </tr>
             `).join('');
 
@@ -426,38 +426,38 @@
             // Lịch trình chi tiết
             document.getElementById('full-schedules-list').innerHTML = data.schedules.map(s => `
                 <tr>
-                    <td class="py-3 font-bold">${s.driver_name}</td>
-                    <td class="py-3 font-semibold text-blue-600">${s.vehicle_plate}</td>
-                    <td class="py-3">${s.departure_time}</td>
-                    <td class="py-3 font-bold ${s.actual_dep_time > s.departure_time ? 'text-red-600' : 'text-emerald-600'}">${s.actual_dep_time || '---'}</td>
-                    <td class="py-3">${s.return_time || '---'}</td>
-                    <td class="py-3 font-bold ${s.actual_ret_time > s.return_time ? 'text-red-600' : 'text-emerald-600'}">${s.actual_ret_time || '---'}</td>
-                    <td class="py-3"><span class="px-2 py-0.5 rounded-full text-[11px] font-semibold bg-blue-100 text-blue-800">${s.status}</span></td>
-                    <td class="py-3 text-right"><button onclick="deleteSchedule(${s.id})" class="text-red-600 font-semibold">Xóa</button></td>
+                    <td class="ui-100">${s.driver_name}</td>
+                    <td class="ui-095">${s.vehicle_plate}</td>
+                    <td class="ui-098">${s.departure_time}</td>
+                    <td class="actual-time ${s.actual_dep_time > s.departure_time ? 'late-time' : 'on-time'}">${s.actual_dep_time || '---'}</td>
+                    <td class="ui-098">${s.return_time || '---'}</td>
+                    <td class="actual-time ${s.actual_ret_time > s.return_time ? 'late-time' : 'on-time'}">${s.actual_ret_time || '---'}</td>
+                    <td class="ui-098"><span class="ui-103">${s.status}</span></td>
+                    <td class="ui-104"><button onclick="deleteSchedule(${s.id})" class="ui-105">Xóa</button></td>
                 </tr>
             `).join('');
 
             // Tài xế
             document.getElementById('drivers-list').innerHTML = data.drivers.map(d => `
                 <tr>
-                    <td class="py-3 font-bold">${d.code}</td>
-                    <td class="py-3">${d.name}</td>
-                    <td class="py-3">${d.age || '---'} tuổi / ${d.gender}</td>
-                    <td class="py-3">
-                        <span class="px-2 py-0.5 rounded-full text-[10px] font-bold ${d.has_face ? 'bg-emerald-100 text-emerald-800' : 'bg-slate-100 text-slate-500'}">
+                    <td class="ui-100">${d.code}</td>
+                    <td class="ui-098">${d.name}</td>
+                    <td class="ui-098">${d.age || '---'} tuổi / ${d.gender}</td>
+                    <td class="ui-098">
+                        <span class="face-state ${d.has_face ? 'face-state--ready' : 'face-state--empty'}">
                             ${d.has_face ? '● Đã Sync Khuôn Mặt' : 'Chưa có Face Data'}
                         </span>
                     </td>
-                    <td class="py-3 text-right"><button onclick="deleteDriver(${d.id})" class="text-red-600 font-semibold">Xóa</button></td>
+                    <td class="ui-104"><button onclick="deleteDriver(${d.id})" class="ui-105">Xóa</button></td>
                 </tr>
             `).join('');
 
             // Xe
             document.getElementById('vehicles-list').innerHTML = data.vehicles.map(v => `
                 <tr>
-                    <td class="py-3 font-bold text-slate-800">${v.plate}</td>
-                    <td class="py-3">${v.vehicle_type}</td>
-                    <td class="py-3 text-right"><button onclick="deleteVehicle(${v.id})" class="text-red-600 font-semibold">Xóa</button></td>
+                    <td class="ui-094">${v.plate}</td>
+                    <td class="ui-098">${v.vehicle_type}</td>
+                    <td class="ui-104"><button onclick="deleteVehicle(${v.id})" class="ui-105">Xóa</button></td>
                 </tr>
             `).join('');
         }
