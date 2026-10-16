@@ -112,7 +112,7 @@
                                     <th class="local-pb-3">TRẠNG THÁI</th>
                                 </tr>
                             </thead>
-                            <tbody id="overview-schedules-list" class="divide-y"></tbody>
+                            <tbody id="overview-schedules-list" class="local-divide-y"></tbody>
                         </table>
                     </div>
                 </div>
@@ -171,7 +171,7 @@
                             <th class="local-pb-3 local-text-right">THAO TÁC</th>
                         </tr>
                     </thead>
-                    <tbody id="full-schedules-list" class="divide-y"></tbody>
+                    <tbody id="full-schedules-list" class="local-divide-y"></tbody>
                 </table>
             </div>
         </div>
@@ -217,7 +217,7 @@
                             <th class="local-pb-3 local-text-right">THAO TÁC</th>
                         </tr>
                     </thead>
-                    <tbody id="drivers-list" class="divide-y"></tbody>
+                    <tbody id="drivers-list" class="local-divide-y"></tbody>
                 </table>
             </div>
         </div>
@@ -247,7 +247,7 @@
                             <th class="local-pb-3 local-text-right">THAO TÁC</th>
                         </tr>
                     </thead>
-                    <tbody id="vehicles-list" class="divide-y"></tbody>
+                    <tbody id="vehicles-list" class="local-divide-y"></tbody>
                 </table>
             </div>
         </div>
@@ -354,7 +354,7 @@
                 guide.innerText = "✅ Đã thu thập đủ 3 góc mặt!";
                 btn.className = "local-bg-emerald-600 local-text-white local-px-5 local-py-2 local-rounded-xl local-text-xs local-font-bold";
                 btn.innerText = "Hoàn Tất Quét Khuôn Mặt";
-                document.getElementById('face-status-badge').className = "local-text-xs local-bg-emerald-100 text-emerald-800 local-px-3 local-py-1 local-rounded-full local-font-bold";
+                document.getElementById('face-status-badge').className = "local-text-xs local-bg-emerald-100 local-text-emerald-800 local-px-3 local-py-1 local-rounded-full local-font-bold";
                 document.getElementById('face-status-badge').innerText = "✅ Đã thu thập đủ 3 góc khuôn mặt";
                 setTimeout(closeCameraModal, 1000);
             }
@@ -444,7 +444,7 @@
                     <td class="local-py-3">${d.name}</td>
                     <td class="local-py-3">${d.age || '---'} tuổi / ${d.gender}</td>
                     <td class="local-py-3">
-                        <span class="local-px-2 local-py-0-5 local-rounded-full local-text-10px local-font-bold ${d.has_face ? 'local-bg-emerald-100 text-emerald-800' : 'local-bg-slate-100 local-text-slate-500'}">
+                        <span class="local-px-2 local-py-0-5 local-rounded-full local-text-10px local-font-bold ${d.has_face ? 'local-bg-emerald-100 local-text-emerald-800' : 'local-bg-slate-100 local-text-slate-500'}">
                             ${d.has_face ? '● Đã Sync Khuôn Mặt' : 'Chưa có Face Data'}
                         </span>
                     </td>
