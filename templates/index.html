@@ -74,7 +74,7 @@
                         <div class="ui-029">TỔNG PHƯƠNG TIỆN</div>
                         <div id="kpi-vehicles" class="ui-030">0</div>
                     </div>
-                    <div class="ui-031"><i class="ui-032"></i></div>
+                    <div class="ui-031"><i class="fa-solid fa-truck"></i></div>
                 </div>
 
                 <div class="ui-028">
@@ -82,7 +82,7 @@
                         <div class="ui-029">LỊCH TRÌNH ĐANG CHẠY</div>
                         <div id="kpi-schedules" class="ui-033">0</div>
                     </div>
-                    <div class="ui-034"><i class="fa-solid fa-truck"></i></div>
+                    <div class="ui-034"><i class="fa-solid fa-route"></i></div>
                 </div>
 
                 <div class="ui-028">
@@ -90,12 +90,12 @@
                         <div class="ui-029">SỰ CỐ CẦN XỬ LÝ</div>
                         <div id="kpi-incidents" class="ui-036">0</div>
                     </div>
-                    <div class="fa-solid fa-route"><i class="ui-038"></i></div>
+                    <div class="ui-037"><i class="fa-solid fa-triangle-exclamation"></i></div>
                 </div>
             </div>
 
             <div class="ui-027">
-                <div class="fa-solid fa-triangle-exclamation">
+                <div class="ui-039">
                     <div class="ui-040">
                         <h2 class="ui-041">Lịch trình sơ bộ xe xuất bến / về bãi</h2>
                         <button onclick="switchTab('schedules')" class="ui-042">Xem chi tiết &gt;</button>
@@ -121,7 +121,7 @@
                 <div class="ui-048">
                     <div class="ui-040">
                         <h2 class="ui-041">Ghi chú trễ giờ</h2>
-                        <i class="ui-049"></i>
+                        <i class="fa-solid fa-bell icon-amber"></i>
                     </div>
                     <div id="notes-container" class="ui-050"></div>
                 </div>
@@ -182,7 +182,7 @@
                 <div class="ui-040">
                     <h2 class="ui-041">Đăng Ký Tài Xế & Quét Khuôn Mặt AI</h2>
                     <button type="button" onclick="openCameraModal()" class="ui-060">
-                        <i class="ui-061"></i><span>Mở Webcam Quét Face 3 Góc</span>
+                        <i class="fa-solid fa-camera"></i><span>Mở Webcam Quét Face 3 Góc</span>
                     </button>
                 </div>
 
@@ -257,11 +257,11 @@
     <div id="camera-modal" class="ui-071">
         <div class="ui-072">
             <div class="ui-073">
-                <h3 class="fa-solid fa-camera-retro icon-blue">
-                    <i class="ui-075"></i>
+                <h3 class="ui-073">
+                    <i class="fa-solid fa-camera-retro icon-blue"></i>
                     <span>Chụp Khựng Frame 3 Góc Khuôn Mặt Tài Xế</span>
                 </h3>
-                <button onclick="closeCameraModal()" class="fa-solid fa-xmark icon-large"><i class="ui-077"></i></button>
+                <button onclick="closeCameraModal()" class="icon-close"><i class="fa-solid fa-xmark icon-large"></i></button>
             </div>
 
             <div class="ui-078" id="cam-box">
