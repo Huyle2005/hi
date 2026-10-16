@@ -11,40 +11,40 @@
 <body class="local-bg-slate-100 local-text-slate-800 local-font-sans local-h-screen local-flex local-overflow-hidden">
 
     <!-- SIDEBAR BÊN TRÁI -->
-    <aside class="local-w-64 local-bg-0a1931 local-text-white local-flex local-flex-col local-justify-between local-p-4 local-flex-shrink-0">
+    <aside class="app-sidebar">
         <div>
             <img src="{{ url_for('static', filename='images/logo.png') }}"
              alt="Logo IUH"
-             class="local-w-30 local-h-30 local-object-contain local-flex-shrink-0 local-border-2 local-border-white-500 local-rounded-xl local-p-2">
+             class="sidebar-logo">
 
 
-            <div class="local-text-11px local-font-semibold local-text-slate-400 local-mb-2 local-px-2 local-uppercase local-tracking-wider">Trung tâm vận hành</div>
+            <div class="sidebar-title">Trung tâm vận hành</div>
 
-            <nav class="local-space-y-1 local-text-sm local-font-medium">
-                <button onclick="switchTab('overview')" id="nav-overview" class="local-w-full local-flex local-items-center local-space-x-3 local-px-3 local-py-2-5 local-rounded-xl local-bg-blue-600 local-text-white local-transition">
+            <nav class="sidebar-nav">
+                <button onclick="switchTab('overview')" id="nav-overview" class="sidebar-nav-link is-active">
                     <i class="fa-solid fa-gauge-high local-w-5"></i><span>Tổng quan</span>
                 </button>
-                <button onclick="switchTab('schedules')" id="nav-schedules" class="local-w-full local-flex local-items-center local-space-x-3 local-px-3 local-py-2-5 local-rounded-xl local-text-slate-300 local-hover-bg-slate-800 local-transition">
+                <button onclick="switchTab('schedules')" id="nav-schedules" class="sidebar-nav-link">
                     <i class="fa-solid fa-calendar-days local-w-5"></i><span>Quản lý Lịch trình</span>
                 </button>
-                <button onclick="switchTab('drivers')" id="nav-drivers" class="local-w-full local-flex local-items-center local-space-x-3 local-px-3 local-py-2-5 local-rounded-xl local-text-slate-300 local-hover-bg-slate-800 local-transition">
+                <button onclick="switchTab('drivers')" id="nav-drivers" class="sidebar-nav-link">
                     <i class="fa-solid fa-users local-w-5"></i><span>Quản lý Tài xế</span>
                 </button>
-                <button onclick="switchTab('vehicles')" id="nav-vehicles" class="local-w-full local-flex local-items-center local-space-x-3 local-px-3 local-py-2-5 local-rounded-xl local-text-slate-300 local-hover-bg-slate-800 local-transition">
+                <button onclick="switchTab('vehicles')" id="nav-vehicles" class="sidebar-nav-link">
                     <i class="fa-solid fa-truck local-w-5"></i><span>Quản lý Xe</span>
                 </button>
             </nav>
         </div>
 
-        <div class="local-space-y-3">
-            <div class="local-bg-slate-800-60 local-p-3 local-rounded-xl local-text-xs local-space-y-1 local-border local-border-slate-700">
-                <div class="local-flex local-items-center local-space-x-2 local-text-emerald-400 local-font-medium">
-                    <span class="local-w-2 local-h-2 local-rounded-full local-bg-emerald-400 local-animate-pulse"></span>
+        <div class="sidebar-footer">
+            <div class="sidebar-status-card">
+                <div class="sidebar-status">
+                    <span class="sidebar-status-dot"></span>
                     <span>AI Sync Pi 4 Ready</span>
                 </div>
             </div>
 
-            <a href="/logout" class="local-flex local-items-center local-justify-center local-space-x-2 local-w-full local-bg-red-600-20 local-text-red-400 local-hover-bg-red-600 local-hover-text-white local-p-2 local-rounded-xl local-text-xs local-font-bold local-transition">
+            <a href="/logout" class="sidebar-logout">
                 <i class="fa-solid fa-right-from-bracket"></i><span>Đăng xuất</span>
             </a>
         </div>
@@ -304,10 +304,10 @@
         function switchTab(tab) {
             ['overview', 'schedules', 'drivers', 'vehicles'].forEach(t => {
                 document.getElementById(`view-${t}`).classList.add('local-hidden');
-                document.getElementById(`nav-${t}`).className = "local-w-full local-flex local-items-center local-space-x-3 local-px-3 local-py-2-5 local-rounded-xl local-text-slate-300 local-hover-bg-slate-800 local-transition";
+                document.getElementById(`nav-${t}`).className = "sidebar-nav-link";
             });
             document.getElementById(`view-${tab}`).classList.remove('local-hidden');
-            document.getElementById(`nav-${tab}`).className = "local-w-full local-flex local-items-center local-space-x-3 local-px-3 local-py-2-5 local-rounded-xl local-bg-blue-600 local-text-white local-transition";
+            document.getElementById(`nav-${tab}`).className = "sidebar-nav-link is-active";
         }
 
         async function openCameraModal() {
