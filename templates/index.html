@@ -21,10 +21,10 @@
             <div class="ui-004">Trung tâm vận hành</div>
 
             <nav class="ui-005">
-                <button onclick="switchTab('overview')" id="nav-overview" class="ui-006">
+                <button onclick="switchTab('overview')" id="nav-overview" class="nav-link nav-link--active">
                     <i class="ui-007"></i><span>Tổng quan</span>
                 </button>
-                <button onclick="switchTab('schedules')" id="nav-schedules" class="ui-008">
+                <button onclick="switchTab('schedules')" id="nav-schedules" class="nav-link">
                     <i class="ui-009"></i><span>Quản lý Lịch trình</span>
                 </button>
                 <button onclick="switchTab('drivers')" id="nav-drivers" class="ui-008">
@@ -371,11 +371,11 @@
             const btn = document.getElementById('btn-capture-step');
             btn.disabled = false;
             btn.className =
-                'bg-blue-600 hover:bg-blue-700 text-white px-5 py-2 rounded-xl text-xs font-bold flex items-center space-x-2';
+                'button button--primary capture-button';
             btn.innerHTML =
                 '<i class="ui-061"></i><span>Chụp Frame 1 (Thẳng)</span>';
             const badge = document.getElementById('face-status-badge');
-            badge.className ='text-xs bg-amber-100 text-amber-800 px-3 py-1 rounded-full font-bold';
+            badge.className ='status-pill status-pill--pending';
             badge.innerText = 'Chưa quét khuôn mặt (Cần quét 3 góc)';
         }
 
@@ -406,9 +406,9 @@
                 <tr class="ui-093">
                     <td class="ui-094">${s.driver_name}</td>
                     <td class="ui-095">${s.vehicle_plate}</td>
-                    <td class="ui-096">${s.departure_time} ${s.actual_dep_time ? `<span class="ui-097">(${s.actual_dep_time})</span>` : ''}</td>
+                    <td class="ui-096">${s.departure_time} ${s.actual_dep_time ? `<span class="actual-time on-time">(${s.actual_dep_time})</span>` : ''}</td>
                     <td class="ui-096">${s.return_time || '---'} ${s.actual_ret_time ? `<span class="ui-097">(${s.actual_ret_time})</span>` : ''}</td>
-                    <td class="ui-098"><span class="ui-099">${s.status}</span></td>
+                    <td class="ui-098"><span class="status-pill status-pill--info">${s.status}</span></td>
                 </tr>
             `).join('');
 
@@ -432,8 +432,8 @@
                     <td class="actual-time ${s.actual_dep_time > s.departure_time ? 'late-time' : 'on-time'}">${s.actual_dep_time || '---'}</td>
                     <td class="ui-098">${s.return_time || '---'}</td>
                     <td class="actual-time ${s.actual_ret_time > s.return_time ? 'late-time' : 'on-time'}">${s.actual_ret_time || '---'}</td>
-                    <td class="ui-098"><span class="ui-103">${s.status}</span></td>
-                    <td class="ui-104"><button onclick="deleteSchedule(${s.id})" class="ui-105">Xóa</button></td>
+                    <td class="ui-098"><span class="status-pill status-pill--info">${s.status}</span></td>
+                    <td class="ui-104"><button onclick="deleteSchedule(${s.id})" class="button-link button-link--danger">Xóa</button></td>
                 </tr>
             `).join('');
 
