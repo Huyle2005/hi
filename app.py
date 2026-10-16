@@ -136,7 +136,7 @@ def send_otp_email(to_email, otp):
     api_key = os.environ.get("RESEND_API_KEY")
     email_from = os.environ.get(
         "EMAIL_FROM",
-        "onboarding@resend.dev"
+        "adminnhom2@gmail.com"
     )
 
     if not api_key:
