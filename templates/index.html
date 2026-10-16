@@ -22,16 +22,16 @@
 
             <nav class="ui-005">
                 <button onclick="switchTab('overview')" id="nav-overview" class="nav-link nav-link--active">
-                    <i class="ui-007"></i><span>Tổng quan</span>
+                    <i class="fa-solid fa-gauge-high icon-width"></i><span>Tổng quan</span>
                 </button>
                 <button onclick="switchTab('schedules')" id="nav-schedules" class="nav-link">
-                    <i class="ui-009"></i><span>Quản lý Lịch trình</span>
+                    <i class="fa-solid fa-calendar-days icon-width"></i><span>Quản lý Lịch trình</span>
                 </button>
                 <button onclick="switchTab('drivers')" id="nav-drivers" class="ui-008">
-                    <i class="ui-010"></i><span>Quản lý Tài xế</span>
+                    <i class="fa-solid fa-users icon-width"></i><span>Quản lý Tài xế</span>
                 </button>
                 <button onclick="switchTab('vehicles')" id="nav-vehicles" class="ui-008">
-                    <i class="ui-011"></i><span>Quản lý Xe</span>
+                    <i class="fa-solid fa-truck icon-width"></i><span>Quản lý Xe</span>
                 </button>
             </nav>
         </div>
@@ -45,7 +45,7 @@
             </div>
 
             <a href="/logout" class="ui-016">
-                <i class="ui-017"></i><span>Đăng xuất</span>
+                <i class="fa-solid fa-right-from-bracket"></i><span>Đăng xuất</span>
             </a>
         </div>
     </aside>
@@ -82,7 +82,7 @@
                         <div class="ui-029">LỊCH TRÌNH ĐANG CHẠY</div>
                         <div id="kpi-schedules" class="ui-033">0</div>
                     </div>
-                    <div class="ui-034"><i class="ui-035"></i></div>
+                    <div class="ui-034"><i class="fa-solid fa-truck"></i></div>
                 </div>
 
                 <div class="ui-028">
@@ -90,12 +90,12 @@
                         <div class="ui-029">SỰ CỐ CẦN XỬ LÝ</div>
                         <div id="kpi-incidents" class="ui-036">0</div>
                     </div>
-                    <div class="ui-037"><i class="ui-038"></i></div>
+                    <div class="fa-solid fa-route"><i class="ui-038"></i></div>
                 </div>
             </div>
 
             <div class="ui-027">
-                <div class="ui-039">
+                <div class="fa-solid fa-triangle-exclamation">
                     <div class="ui-040">
                         <h2 class="ui-041">Lịch trình sơ bộ xe xuất bến / về bãi</h2>
                         <button onclick="switchTab('schedules')" class="ui-042">Xem chi tiết &gt;</button>
@@ -151,7 +151,7 @@
                         <input type="time" id="schedule-ret-time" class="ui-054">
                     </div>
                     <div class="ui-055">
-                        <button type="submit" class="ui-056">Tạo Lịch Trình</button>
+                        <button type="submit" class="fa-solid fa-bell icon-amber">Tạo Lịch Trình</button>
                     </div>
                 </form>
             </div>
@@ -186,7 +186,7 @@
                     </button>
                 </div>
 
-                <form id="add-driver-form" class="ui-062">
+                <form id="add-driver-form" class="fa-solid fa-camera">
                     <input type="text" id="driver-code" placeholder="Mã TX (vd: TX003)" class="ui-063" required>
                     <input type="text" id="driver-name" placeholder="Họ và Tên" class="ui-063" required>
                     <input type="number" id="driver-age" placeholder="Tuổi" class="ui-063" min="18" max="60" step="1" required>
@@ -257,11 +257,11 @@
     <div id="camera-modal" class="ui-071">
         <div class="ui-072">
             <div class="ui-073">
-                <h3 class="ui-074">
+                <h3 class="fa-solid fa-camera-retro icon-blue">
                     <i class="ui-075"></i>
                     <span>Chụp Khựng Frame 3 Góc Khuôn Mặt Tài Xế</span>
                 </h3>
-                <button onclick="closeCameraModal()" class="ui-076"><i class="ui-077"></i></button>
+                <button onclick="closeCameraModal()" class="fa-solid fa-xmark icon-large"><i class="ui-077"></i></button>
             </div>
 
             <div class="ui-078" id="cam-box">
