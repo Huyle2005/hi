@@ -185,7 +185,7 @@
 
 /* Thanh bên IUH Smart Parking */
 .app-sidebar{box-sizing:border-box;width:280px;min-width:280px;height:100vh;display:flex;flex-direction:column;justify-content:space-between;flex-shrink:0;padding:20px;background:#0a1931;color:#fff;overflow-y:auto}
-.sidebar-logo{display:block;width:150px;height:150px;object-fit:contain;flex-shrink:0;border:2px solid #fff;border-radius:16px;padding:12px;margin:0 0 8px 0}
+.sidebar-logo{display:block;box-sizing:border-box;width:188px;height:188px;object-fit:contain;object-position:center center;flex-shrink:0;border:2px solid #fff;border-radius:22px;padding:10px;margin:0 auto 10px}
 .sidebar-title{margin:0 0 10px;padding:0 8px;color:#aab8cc;font-size:12px;font-weight:600;letter-spacing:.09em;text-transform:uppercase}
 .sidebar-nav{display:flex;flex-direction:column;gap:8px;font-size:14px;font-weight:500}
 .sidebar-nav-link{appearance:none;-webkit-appearance:none;display:flex;align-items:center;gap:12px;width:100%;min-height:52px;padding:12px 14px;margin:0;border:1px solid transparent;border-radius:16px;background:transparent;color:#c5d1e0;text-align:left;font-size:14px;font-weight:500;line-height:1.4;box-shadow:none;outline:none;transition:background .18s ease,color .18s ease}
@@ -200,4 +200,4 @@
 .sidebar-status-dot{width:10px;height:10px;flex:0 0 10px;border-radius:50%;background:#34d399;animation:pulse 2s infinite}
 .sidebar-logout{display:flex;align-items:center;justify-content:center;gap:9px;width:100%;min-height:44px;padding:11px 14px;border:1px solid transparent;border-radius:15px;background:#3a1b30;color:#f87171;text-decoration:none;font-size:13px;font-weight:700;transition:background .18s ease,color .18s ease}
 .sidebar-logout:hover{background:#dc2626;color:#fff}
-@media(max-width:700px){.app-sidebar{width:100%;min-width:0;height:auto;min-height:100vh;padding:18px}.sidebar-logo{width:120px;height:120px}.sidebar-nav-link{min-height:48px}.sidebar-footer{margin-top:24px}}
+@media(max-width:700px){.app-sidebar{width:100%;min-width:0;height:auto;min-height:100vh;padding:18px}.sidebar-logo{width:188px;height:188px;margin-left:auto;margin-right:auto}.sidebar-title{text-align:center}.sidebar-nav-link{min-height:48px}.sidebar-footer{margin-top:24px}}
