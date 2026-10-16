@@ -182,3 +182,22 @@
 @keyframes pulse{50%{opacity:.5}}@media(max-width:768px){.local-grid-cols-3,.local-grid-cols-4,.local-grid-cols-5{grid-template-columns:repeat(1,minmax(0,1fr))}.local-w-64{width:13rem}.local-h-screen{height:auto;min-height:100vh}}
 
 .local-text-emerald-800{color:#065f46}
+
+/* Thanh bên IUH Smart Parking */
+.app-sidebar{box-sizing:border-box;width:280px;min-width:280px;height:100vh;display:flex;flex-direction:column;justify-content:space-between;flex-shrink:0;padding:20px;background:#0a1931;color:#fff;overflow-y:auto}
+.sidebar-logo{display:block;width:150px;height:150px;object-fit:contain;flex-shrink:0;border:2px solid #fff;border-radius:16px;padding:12px;margin:0 0 8px 0}
+.sidebar-title{margin:0 0 10px;padding:0 8px;color:#aab8cc;font-size:12px;font-weight:600;letter-spacing:.09em;text-transform:uppercase}
+.sidebar-nav{display:flex;flex-direction:column;gap:8px;font-size:14px;font-weight:500}
+.sidebar-nav-link{appearance:none;-webkit-appearance:none;display:flex;align-items:center;gap:12px;width:100%;min-height:52px;padding:12px 14px;margin:0;border:1px solid transparent;border-radius:16px;background:transparent;color:#c5d1e0;text-align:left;font-size:14px;font-weight:500;line-height:1.4;box-shadow:none;outline:none;transition:background .18s ease,color .18s ease}
+.sidebar-nav-link i{display:inline-flex;align-items:center;justify-content:center;width:18px;min-width:18px;font-size:16px;color:#9fb2cb}
+.sidebar-nav-link:hover{background:#172943;color:#fff}
+.sidebar-nav-link:hover i{color:#fff}
+.sidebar-nav-link.is-active,.sidebar-nav-link.is-active:hover{background:#2563eb;color:#fff;border-color:transparent;box-shadow:0 4px 12px rgb(37 99 235 / .18)}
+.sidebar-nav-link.is-active i{color:#fff}
+.sidebar-footer{display:flex;flex-direction:column;gap:14px;margin-top:28px}
+.sidebar-status-card{padding:17px 15px;border:1px solid #304159;border-radius:16px;background:#17263b;color:#34d399;font-size:13px}
+.sidebar-status{display:flex;align-items:center;gap:10px;font-weight:500}
+.sidebar-status-dot{width:10px;height:10px;flex:0 0 10px;border-radius:50%;background:#34d399;animation:pulse 2s infinite}
+.sidebar-logout{display:flex;align-items:center;justify-content:center;gap:9px;width:100%;min-height:44px;padding:11px 14px;border:1px solid transparent;border-radius:15px;background:#3a1b30;color:#f87171;text-decoration:none;font-size:13px;font-weight:700;transition:background .18s ease,color .18s ease}
+.sidebar-logout:hover{background:#dc2626;color:#fff}
+@media(max-width:700px){.app-sidebar{width:100%;min-width:0;height:auto;min-height:100vh;padding:18px}.sidebar-logo{width:120px;height:120px}.sidebar-nav-link{min-height:48px}.sidebar-footer{margin-top:24px}}
