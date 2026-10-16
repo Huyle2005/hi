@@ -180,3 +180,5 @@
 .local-space-y-6>:not([hidden])~:not([hidden]){margin-top:1.5rem}
 .local-divide-y>*+*{border-top:1px solid #e2e8f0}
 @keyframes pulse{50%{opacity:.5}}@media(max-width:768px){.local-grid-cols-3,.local-grid-cols-4,.local-grid-cols-5{grid-template-columns:repeat(1,minmax(0,1fr))}.local-w-64{width:13rem}.local-h-screen{height:auto;min-height:100vh}}
+
+.local-text-emerald-800{color:#065f46}
