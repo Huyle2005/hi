@@ -13,6 +13,7 @@ import smtplib
 import secrets
 import time
 import re
+import resend
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 TEMPLATE_DIR = os.path.join(BASE_DIR, 'templates')
@@ -128,29 +129,34 @@ def init_db():
         conn.commit()
 
 
+
 def send_otp_email(to_email, otp):
-    mail_address = os.environ.get("MAIL_ADDRESS")
-    mail_password = os.environ.get("MAIL_APP_PASSWORD")
+    
 
-    if not mail_address or not mail_password:
-        raise RuntimeError(
-            "Chưa cấu hình email gửi OTP trên Render"
-        )
-
-    msg = EmailMessage()
-    msg["Subject"] = "Mã xác minh email - IUH Smart Parking"
-    msg["From"] = mail_address
-    msg["To"] = to_email
-    msg.set_content(
-        f"Mã xác minh của bạn là: {otp}\n"
-        "Mã có hiệu lực trong 5 phút."
+    api_key = os.environ.get("RESEND_API_KEY")
+    email_from = os.environ.get(
+        "EMAIL_FROM",
+        "onboarding@resend.dev"
     )
 
-    with smtplib.SMTP_SSL(
-        "smtp.gmail.com", 465, timeout=20
-    ) as smtp:
-        smtp.login(mail_address, mail_password)
-        smtp.send_message(msg)
+    if not api_key:
+        raise RuntimeError(
+            "Chưa cấu hình RESEND_API_KEY trên Render"
+        )
+
+    resend.api_key = api_key
+
+    params = {
+        "from": email_from,
+        "to": [to_email],
+        "subject": "Mã xác minh email - IUH Smart Parking",
+        "text": (
+            f"Mã xác minh của bạn là: {otp}\n"
+            "Mã có hiệu lực trong 5 phút."
+        ),
+    }
+
+    resend.Emails.send(params)
 
 @app.route('/verify-email')
 def verify_email():
