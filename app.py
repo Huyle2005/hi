@@ -1,5 +1,6 @@
 import os
 import base64
+import re
 from datetime import datetime
 from zoneinfo import ZoneInfo
 from flask import Flask, render_template, request, jsonify, session, redirect, url_for, send_from_directory
@@ -270,124 +271,153 @@ def delete_schedule(schedule_id):
 # --- API NHẬN TÍN HIỆU TỰ ĐỘNG TỪ RASPBERRY PI 4 KHI XE RA/VÀO CỔNG ---
 
 
+
 @app.route('/api/gate-event', methods=['POST'])
 def handle_gate_event():
     data = request.get_json(silent=True) or {}
 
-    plate = (data.get('plate') or '').strip()
-    action = (data.get('action') or '').strip().upper()
-
-    rfid_uid = (
-        data.get('rfid_uid')
-        or data.get('uid')
-        or 'UNKNOWN'
+    # Chuẩn hóa biển số: bỏ dấu cách và ký tự phân cách
+    plate = re.sub(
+        r'[^A-Z0-9]', '', (data.get('plate') or '').upper()
     )
+    action = (data.get('action') or '').strip().upper()
+    driver_code = (data.get('driver_code') or '').strip()
+    rfid_uid = data.get('rfid_uid') or data.get('uid') or 'UNKNOWN'
     tx = data.get('tx')
 
-    # Thời gian Việt Nam
     now_time = datetime.now(
-        ZoneInfo("Asia/Ho_Chi_Minh")
+        ZoneInfo('Asia/Ho_Chi_Minh')
     ).strftime('%H:%M')
 
+    # Kiểm tra loại sự kiện
     if action not in ('IN', 'OUT'):
         return jsonify({
-            "success": False,
-            "message": "action phải là IN hoặc OUT"
+            'success': False,
+            'message': 'action phải là IN hoặc OUT'
         }), 400
 
-    if not plate:
+    # Bắt buộc phải có biển số và mã tài xế
+    if not plate or not driver_code:
+        return jsonify({
+            'success': False,
+            'message': 'Thiếu biển số hoặc mã tài xế đã nhận diện'
+        }), 400
+
+    # OUT = xe xuất bến; IN = xe về bãi
+    expected_status = (
+        'Chờ xuất bến' if action == 'OUT' else 'Đang chạy'
+    )
+
+    try:
         with get_db() as conn:
-            conn.execute("""
+            # Tìm lịch trình theo biển số và trạng thái phù hợp
+            schedule = conn.execute('''
+                SELECT s.id, s.status,
+                       d.code AS driver_code,
+                       d.name AS driver_name,
+                       v.plate AS vehicle_plate
+                FROM schedules s
+                JOIN drivers d ON d.id = s.driver_id
+                JOIN vehicles v ON v.id = s.vehicle_id
+                WHERE regexp_replace(
+                    upper(v.plate), '[^A-Z0-9]', '', 'g'
+                ) = %s
+                  AND s.status = %s
+                ORDER BY s.id DESC
+                LIMIT 1
+            ''', (plate, expected_status)).fetchone()
+
+            # Không có lịch trình phù hợp thì từ chối
+            if not schedule:
+                latest = conn.execute('''
+                    SELECT s.status
+                    FROM schedules s
+                    JOIN vehicles v ON v.id = s.vehicle_id
+                    WHERE regexp_replace(
+                        upper(v.plate), '[^A-Z0-9]', '', 'g'
+                    ) = %s
+                    ORDER BY s.id DESC
+                    LIMIT 1
+                ''', (plate,)).fetchone()
+
+                status_msg = (
+                    f"Trạng thái lịch trình hiện tại là "
+                    f"'{latest['status']}', không phù hợp "
+                    f"thao tác {action}"
+                    if latest else
+                    'Không tìm thấy lịch trình cho biển số này'
+                )
+
+                conn.execute('''
+                    INSERT INTO rfid_logs
+                        (rfid_uid, tx, event_type, status)
+                    VALUES (%s, %s, %s, %s)
+                ''', (
+                    rfid_uid, tx, action, 'SCHEDULE_NOT_READY'
+                ))
+
+                return jsonify({
+                    'success': False,
+                    'message': status_msg
+                }), 409
+
+            # Kiểm tra tài xế có đúng lịch trình không
+            if schedule['driver_code'] != driver_code:
+                conn.execute('''
+                    INSERT INTO rfid_logs
+                        (rfid_uid, tx, event_type, status)
+                    VALUES (%s, %s, %s, %s)
+                ''', (
+                    rfid_uid, tx, action, 'DRIVER_MISMATCH'
+                ))
+
+                return jsonify({
+                    'success': False,
+                    'message':
+                        'Khuôn mặt nhận diện không khớp '
+                        'tài xế của lịch trình'
+                }), 403
+
+            # Chỉ cập nhật khi biển số, tài xế và trạng thái đúng
+            if action == 'OUT':
+                conn.execute('''
+                    UPDATE schedules
+                    SET actual_dep_time = %s,
+                        status = 'Đang chạy'
+                    WHERE id = %s
+                ''', (now_time, schedule['id']))
+            else:
+                conn.execute('''
+                    UPDATE schedules
+                    SET actual_ret_time = %s,
+                        status = 'Đã về bãi'
+                    WHERE id = %s
+                ''', (now_time, schedule['id']))
+
+            # Ghi nhận sự kiện thành công
+            conn.execute('''
                 INSERT INTO rfid_logs
                     (rfid_uid, tx, event_type, status)
                 VALUES (%s, %s, %s, %s)
-            """, (
-                rfid_uid, tx, action, 'MISSING_PLATE'
-            ))
+            ''', (rfid_uid, tx, action, 'SUCCESS'))
 
         return jsonify({
-            "success": False,
-            "message": "Thiếu biển số xe"
-        }), 400
-
-    try:
-        # Cập nhật lịch trình và ghi log trong cùng transaction
-        with get_db() as conn:
-            schedule = conn.execute("""
-                SELECT s.id, s.status
-                FROM schedules s
-                JOIN vehicles v ON s.vehicle_id = v.id
-                WHERE v.plate = %s
-                ORDER BY s.id DESC
-                LIMIT 1
-            """, (plate,)).fetchone()
-
-            if not schedule:
-                conn.execute("""
-                    INSERT INTO rfid_logs
-                        (rfid_uid, tx, event_type, status)
-                    VALUES (%s, %s, %s, %s)
-                """, (
-                    rfid_uid, tx, action,
-                    'SCHEDULE_NOT_FOUND'
-                ))
-
-                result = {
-                    "success": False,
-                    "message": (
-                        "Không tìm thấy lịch trình "
-                        "đăng ký cho xe này"
-                    )
-                }
-                status_code = 404
-
-            else:
-                if action == 'OUT':
-                    conn.execute("""
-                        UPDATE schedules
-                        SET actual_dep_time = %s,
-                            status = 'Đang chạy'
-                        WHERE id = %s
-                    """, (now_time, schedule['id']))
-
-                else:  # action == 'IN'
-                    conn.execute("""
-                        UPDATE schedules
-                        SET actual_ret_time = %s,
-                            status = 'Đã về bãi'
-                        WHERE id = %s
-                    """, (now_time, schedule['id']))
-
-                # Ghi lịch sử quét vào bảng riêng
-                conn.execute("""
-                    INSERT INTO rfid_logs
-                        (rfid_uid, tx, event_type, status)
-                    VALUES (%s, %s, %s, %s)
-                """, (
-                    rfid_uid, tx, action, 'SUCCESS'
-                ))
-
-                result = {
-                    "success": True,
-                    "plate": plate,
-                    "action": action,
-                    "time": now_time,
-                    "message": (
-                        f"Cập nhật thời gian xe {plate} "
-                        f"thành công lúc {now_time}"
-                    )
-                }
-                status_code = 200
-
-        return jsonify(result), status_code
+            'success': True,
+            'driver_code': driver_code,
+            'plate': plate,
+            'action': action,
+            'time': now_time,
+            'message':
+                f"Đã ghi nhận {action} xe {plate} lúc {now_time}"
+        }), 200
 
     except Exception:
         app.logger.exception(
-            "Lỗi cập nhật thời gian vào/ra và lưu RFID log"
+            'Lỗi cập nhật lịch trình từ Raspberry Pi'
         )
         return jsonify({
-            "success": False,
-            "message": "Không lưu được thời gian vào/ra"
+            'success': False,
+            'message': 'Lỗi máy chủ khi cập nhật lịch trình'
         }), 500
 
 # --- API TÀI XẾ & FACE DATASET ---
