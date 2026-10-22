@@ -135,7 +135,7 @@
                     <td class="local-py-3">${s.return_time || '---'}</td>
                     <td class="local-py-3 local-font-bold ${s.actual_ret_time > s.return_time ? 'local-text-red-600' : 'local-text-emerald-600'}">${s.actual_ret_time || '---'}</td>
                     <td class="local-py-3"><span class="local-px-2 local-py-0-5 local-rounded-full local-text-11px local-font-semibold local-bg-blue-100 local-text-blue-800">${s.status}</span></td>
-                    <td class="local-py-3 local-text-right"><button onclick="deleteSchedule(${s.id})" class="local-text-red-600 local-font-semibold">Xóa</button></td>
+                    <td class="local-py-3 local-text-right"><button onclick="deleteSchedule(${s.id})"  style="background: transparent; border: none; outline: none; box-shadow: none; padding: 0; color: red; cursor: pointer;">Xóa</button></td>
                 </tr>
             `).join('');
 
@@ -150,7 +150,7 @@
                             ${d.has_face ? '● Đã Sync Khuôn Mặt' : 'Chưa có Face Data'}
                         </span>
                     </td>
-                    <td class="local-py-3 local-text-right"><button onclick="deleteDriver(${d.id})" class="local-text-red-600 local-font-semibold">Xóa</button></td>
+                    <td class="local-py-3 local-text-right"><button onclick="deleteDriver(${d.id})"  style="background: transparent; border: none; outline: none; box-shadow: none; padding: 0; color: red; cursor: pointer;">Xóa</button></td>
                 </tr>
             `).join('');
 
@@ -159,7 +159,7 @@
                 <tr>
                     <td class="local-py-3 local-font-bold local-text-slate-800">${v.plate}</td>
                     <td class="local-py-3">${v.vehicle_type}</td>
-                    <td class="local-py-3 local-text-right"><button onclick="deleteVehicle(${v.id})" class="local-text-red-600 local-font-semibold">Xóa</button></td>
+                    <td class="local-py-3 local-text-right"><button onclick="deleteVehicle(${v.id})"  style="background: transparent; border: none; outline: none; box-shadow: none; padding: 0; color: red; cursor: pointer;">Xóa</button></td>
                 </tr>
             `).join('');
         }
