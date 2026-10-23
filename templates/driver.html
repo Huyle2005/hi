@@ -65,11 +65,28 @@
         tr:hover td {
             background: #f8fafc;
         }
+
+        /* Đồng bộ màu thanh đầu trang với thanh điều hướng IUH */
+        .driver-header {
+            background: linear-gradient(100deg, #416b9f, #245477);
+        }
+
+        .driver-logout {
+            background: rgba(255, 255, 255, .12);
+            border: 1px solid rgba(255, 255, 255, .3);
+            color: #fff;
+            text-decoration: none;
+            transition: background .2s ease;
+        }
+
+        .driver-logout:hover {
+            background: rgba(255, 255, 255, .22);
+        }
     </style>
 </head>
 
 <body>
-    <header class="bg-slate-900 text-white shadow">
+    <header class="driver-header text-white shadow">
         <div class="max-w-screen-2xl mx-auto px-6 py-5
                     flex flex-wrap justify-between items-center gap-4">
             <div>
@@ -88,8 +105,7 @@
                 </div>
 
                 <a href="/logout"
-                   class="bg-slate-700 hover:bg-slate-600
-                          px-4 py-2 rounded-lg text-sm">
+                   class="driver-logout px-4 py-2 rounded-lg text-sm">
                     Đăng xuất
                 </a>
             </div>
@@ -143,9 +159,12 @@
                 <div class="grid grid-cols-1 md:grid-cols-3 gap-3 mt-5">
                     <input id="search-input"
                            type="search"
-                           placeholder="Tìm tài xế, biển số xe..."
+                           list="driver-name-options"
+                           autocomplete="off"
+                           placeholder="Chọn hoặc nhập tên tài xế..."
                            class="border border-slate-300 rounded-lg px-3 py-2 text-sm
                                   focus:outline-none focus:ring-2 focus:ring-blue-500">
+                    <datalist id="driver-name-options"></datalist>
 
                     <select id="status-filter"
                             class="border border-slate-300 rounded-lg px-3 py-2 text-sm">
@@ -153,7 +172,6 @@
                         <option value="chờ xuất bến">Chờ xuất bến</option>
                         <option value="đang chạy">Đang chạy</option>
                         <option value="hoàn thành">Hoàn thành</option>
-                        <option value="đang chạy">Đang chạy</option>
                     </select>
 
                     <p id="last-updated"
@@ -240,6 +258,18 @@
                 .trim();
         }
 
+
+        function populateDriverNames(schedules) {
+            const datalist = document.getElementById('driver-name-options');
+            const names = [...new Set(
+                schedules.map(item => String(item.driver_name || '').trim())
+                    .filter(Boolean)
+            )].sort((a, b) => a.localeCompare(b, 'vi'));
+            datalist.innerHTML = names.map(name =>
+                '<option value="' + escapeHTML(name) + '"></option>'
+            ).join('');
+        }
+
         function statusClass(status) {
             const s = normalize(status);
 
@@ -264,20 +294,12 @@
             );
 
             const filtered = allSchedules.filter(item => {
-                const searchText = normalize([
-                    item.driver_name,
-                    item.driver_code,
-                    item.vehicle_plate,
-                    item.plate,
-                    item.vehicle_type,
-                    item.status
-                ].join(' '));
-
-                const matchesKeyword = searchText.includes(keyword);
+                // Ô tìm kiếm chỉ khớp tên tài xế, không tìm theo mã hoặc biển số.
+                const matchesName = normalize(item.driver_name).includes(keyword);
                 const matchesStatus = !selectedStatus ||
                     normalize(item.status) === selectedStatus;
 
-                return matchesKeyword && matchesStatus;
+                return matchesName && matchesStatus;
             });
 
             document.getElementById('visible-count').textContent =
@@ -382,6 +404,8 @@
                         vehicle_type: s.vehicle_type || vehicle.vehicle_type || vehicle.type || '—'
                     };
                 });
+
+                populateDriverNames(allSchedules);
 
                 document.getElementById('total-count').textContent =
                     allSchedules.length;
