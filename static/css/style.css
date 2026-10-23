@@ -1262,3 +1262,45 @@ body > main {
 .profile-logout:hover {
     background: #fef2f2;
 }
+
+.profile-menu-wrap {
+    position: relative;
+}
+
+.profile-dropdown {
+    position: absolute;
+    top: calc(100% + 8px);
+    right: 0;
+    z-index: 9999;
+    min-width: 160px;
+    padding: 6px;
+    background: #fff;
+    border: 1px solid #e2e8f0;
+    border-radius: 10px;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+}
+
+.profile-dropdown.local-hidden {
+    display: none !important;
+}
+
+.profile-dropdown:not(.local-hidden) {
+    display: block !important;
+}
+
+.profile-logout {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    width: 100%;
+    padding: 12px;
+    color: #dc2626;
+    text-decoration: none;
+    white-space: nowrap;
+    box-sizing: border-box;
+}
+
+.profile-logout:hover {
+    background: #fef2f2;
+    border-radius: 6px;
+}
