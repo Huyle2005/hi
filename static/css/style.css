@@ -1081,3 +1081,19 @@ body.local-h-screen > main {
         flex-wrap: wrap;
     }
 }
+
+
+/* Nút thao tác dạng chữ: dùng chung thay cho style inline trong HTML/JS */
+.btn-link {
+    padding: 0;
+    border: 0;
+    outline: 0;
+    background: transparent;
+    box-shadow: none;
+    color: #dc2626;
+    font: inherit;
+    cursor: pointer;
+}
+.btn-link:hover { text-decoration: underline; }
+.btn-link:focus-visible { outline: 2px solid #2563eb; outline-offset: 3px; }
+.btn-link:disabled { opacity: .55; cursor: wait; }
