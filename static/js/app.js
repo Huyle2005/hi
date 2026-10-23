@@ -1,238 +1,303 @@
-        let capturedImages = [null, null, null];
-        let currentStep = 0;
-        let mediaStream = null;
-        let isDropdownPopulated = false;
+'use strict';
 
-        function switchTab(tab) {
-            ['overview', 'schedules', 'drivers', 'vehicles'].forEach(t => {
-                document.getElementById(`view-${t}`).classList.add('local-hidden');
-                document.getElementById(`nav-${t}`).className = "sidebar-nav-link";
-            });
-            document.getElementById(`view-${tab}`).classList.remove('local-hidden');
-            document.getElementById(`nav-${tab}`).className = "sidebar-nav-link is-active";
+const TAB_NAMES = ['overview', 'schedules', 'drivers', 'vehicles'];
+let capturedImages = [null, null, null];
+let currentStep = 0;
+let mediaStream = null;
+let isDropdownPopulated = false;
+let isLoading = false;
+let refreshTimer = null;
+
+const $ = (id) => document.getElementById(id);
+
+function escapeHtml(value) {
+    return String(value ?? '').replace(/[&<>"']/g, (char) => ({
+        '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+    })[char]);
+}
+
+async function requestJson(url, options = {}) {
+    const response = await fetch(url, {
+        credentials: 'same-origin',
+        ...options,
+        headers: {
+            ...(options.body ? { 'Content-Type': 'application/json' } : {}),
+            ...(options.headers || {})
         }
+    });
 
-        async function openCameraModal() {
-            document.getElementById('camera-modal').classList.remove('local-hidden');
-            try {
-                mediaStream = await navigator.mediaDevices.getUserMedia({ video: { width: 640, height: 480 } });
-                document.getElementById('webcam').srcObject = mediaStream;
-            } catch (err) { alert("Không thể mở Camera!"); }
+    if (response.status === 401) {
+        window.location.href = '/login';
+        throw new Error('Phiên đăng nhập đã hết hạn.');
+    }
+
+    const data = await response.json().catch(() => ({}));
+    if (!response.ok || data.success === false) {
+        throw new Error(data.message || 'Yêu cầu không thành công.');
+    }
+    return data;
+}
+
+function showError(error, fallback = 'Đã xảy ra lỗi. Vui lòng thử lại.') {
+    console.error(error);
+    alert(error?.message || fallback);
+}
+
+function switchTab(tab) {
+    if (!TAB_NAMES.includes(tab)) return;
+    TAB_NAMES.forEach((name) => {
+        $(`view-${name}`)?.classList.toggle('local-hidden', name !== tab);
+        $('nav-' + name)?.classList.toggle('is-active', name === tab);
+    });
+    const titles = {
+        overview: 'Tổng quan hệ thống',
+        schedules: 'Quản lý Lịch trình',
+        drivers: 'Quản lý Tài xế',
+        vehicles: 'Quản lý Xe'
+    };
+    if ($('page-title')) $('page-title').textContent = titles[tab];
+}
+
+async function openCameraModal() {
+    $('camera-modal')?.classList.remove('local-hidden');
+    try {
+        if (!navigator.mediaDevices?.getUserMedia) {
+            throw new Error('Trình duyệt không hỗ trợ camera hoặc trang chưa dùng HTTPS.');
         }
-
-        function closeCameraModal() {
-            if (mediaStream) mediaStream.getTracks().forEach(track => track.stop());
-            document.getElementById('camera-modal').classList.add('local-hidden');
-        }
-
-        function captureNextAngle() {
-            if (currentStep >= 3) return;
-            const video = document.getElementById('webcam');
-            const canvas = document.createElement('canvas');
-            canvas.width = video.videoWidth || 640;
-            canvas.height = video.videoHeight || 480;
-            canvas.getContext('2d').drawImage(video, 0, 0, canvas.width, canvas.height);
-            
-            const b64Img = canvas.toDataURL('image/jpeg');
-            capturedImages[currentStep] = b64Img;
-
-            const camBox = document.getElementById('cam-box');
-            camBox.classList.add('flash-capture');
-            setTimeout(() => camBox.classList.remove('flash-capture'), 300);
-
-            document.getElementById(`prev-${currentStep + 1}`).src = b64Img;
-            currentStep++;
-
-            const btn = document.getElementById('btn-capture-step');
-            const guide = document.getElementById('guide-text');
-
-            if (currentStep === 1) {
-                guide.innerText = "2. Quay mặt NGHIÊNG TRÁI nhẹ";
-                btn.innerHTML = '<i class="fa-solid fa-camera"></i><span>Chụp Frame 2 (Nghiêng Trái)</span>';
-            } else if (currentStep === 2) {
-                guide.innerText = "3. Quay mặt NGHIÊNG PHẢI nhẹ";
-                btn.innerHTML = '<i class="fa-solid fa-camera"></i><span>Chụp Frame 3 (Nghiêng Phải)</span>';
-            } else if (currentStep === 3) {
-                guide.innerText = "✅ Đã thu thập đủ 3 góc mặt!";
-                btn.className = "local-bg-emerald-600 local-text-white local-px-5 local-py-2 local-rounded-xl local-text-xs local-font-bold";
-                btn.innerText = "Hoàn Tất Quét Khuôn Mặt";
-                document.getElementById('face-status-badge').className = "local-text-xs local-bg-emerald-100 local-text-emerald-800 local-px-3 local-py-1 local-rounded-full local-font-bold";
-                document.getElementById('face-status-badge').innerText = "✅ Đã thu thập đủ 3 góc khuôn mặt";
-                setTimeout(closeCameraModal, 1000);
-            }
-        }
-
-        
-        function resetCapture() {
-            capturedImages = [null, null, null];
-            currentStep = 0;
-            [1, 2, 3].forEach(i => {
-                document.getElementById(`prev-${i}`).src = '';
-            });
-            document.getElementById('guide-text').innerText ='1. Nhìn THẲNG vào camera';
-            const btn = document.getElementById('btn-capture-step');
-            btn.disabled = false;
-            btn.className =
-                'local-bg-blue-600 local-hover-bg-blue-700 local-text-white local-px-5 local-py-2 local-rounded-xl local-text-xs local-font-bold local-flex local-items-center local-space-x-2';
-            btn.innerHTML =
-                '<i class="fa-solid fa-camera"></i><span>Chụp Frame 1 (Thẳng)</span>';
-            const badge = document.getElementById('face-status-badge');
-            badge.className ='local-text-xs local-bg-amber-100 local-text-amber-800 local-px-3 local-py-1 local-rounded-full local-font-bold';
-            badge.innerText = 'Chưa quét khuôn mặt (Cần quét 3 góc)';
-        }
-
-        async function loadData() {
-            const res = await fetch('/api/dashboard');
-            if (res.status === 401) { window.location.href = '/login'; return; }
-            const data = await res.json();
-
-            document.getElementById('kpi-vehicles').innerText = data.kpi.total_vehicles;
-            document.getElementById('kpi-schedules').innerText = data.kpi.active_schedules;
-            document.getElementById('kpi-incidents').innerText = data.kpi.total_incidents;
-
-            // Render Ghi chú trễ giờ
-            const notesContainer = document.getElementById('notes-container');
-            if (data.notes.length === 0) {
-                notesContainer.innerHTML = '<div class="local-text-xs local-text-slate-400 local-p-3 local-bg-slate-50 local-rounded-lg">Không có ghi chú trễ giờ nào.</div>';
-            } else {
-                notesContainer.innerHTML = data.notes.map(n => `
-                    <div class="local-p-3 local-bg-amber-50 local-border local-border-amber-200 local-rounded-xl local-space-y-1">
-                        <div class="local-text-xs local-font-bold local-text-amber-900">${n.title}</div>
-                        <div class="local-text-11px local-text-amber-800">${n.content}</div>
-                    </div>
-                `).join('');
-            }
-
-            // Render Lịch trình sơ bộ
-            document.getElementById('overview-schedules-list').innerHTML = data.schedules.slice(0, 5).map(s => `
-                <tr class="local-hover-bg-slate-50">
-                    <td class="local-py-3 local-font-bold local-text-slate-800">${s.driver_name}</td>
-                    <td class="local-py-3 local-font-semibold local-text-blue-600">${s.vehicle_plate}</td>
-                    <td class="local-py-3 local-text-slate-600">${s.departure_time} ${s.actual_dep_time ? `<span class="local-font-bold local-text-emerald-600">(${s.actual_dep_time})</span>` : ''}</td>
-                    <td class="local-py-3 local-text-slate-600">${s.return_time || '---'} ${s.actual_ret_time ? `<span class="local-font-bold local-text-emerald-600">(${s.actual_ret_time})</span>` : ''}</td>
-                    <td class="local-py-3"><span class="local-px-2 local-py-0-5 local-rounded-full local-text-10px local-font-bold local-bg-blue-100 local-text-blue-800">${s.status}</span></td>
-                </tr>
-            `).join('');
-
-            // Selectbox
-            if (!isDropdownPopulated || data.drivers.length !== document.getElementById('schedule-driver-id').children.length - 1) {
-                document.getElementById('schedule-driver-id').innerHTML = '<option value="">-- Chọn tài xế --</option>' +
-                    data.drivers.map(d => `<option value="${d.id}">${d.name} (${d.code})</option>`).join('');
-                
-                document.getElementById('schedule-vehicle-id').innerHTML = '<option value="">-- Chọn xe --</option>' +
-                    data.vehicles.map(v => `<option value="${v.id}">${v.plate} - ${v.vehicle_type}</option>`).join('');
-                
-                isDropdownPopulated = true;
-            }
-
-            // Lịch trình chi tiết
-            document.getElementById('full-schedules-list').innerHTML = data.schedules.map(s => `
-                <tr>
-                    <td class="local-py-3 local-font-bold">${s.driver_name}</td>
-                    <td class="local-py-3 local-font-semibold local-text-blue-600">${s.vehicle_plate}</td>
-                    <td class="local-py-3">${s.departure_time}</td>
-                    <td class="local-py-3 local-font-bold ${s.actual_dep_time > s.departure_time ? 'local-text-red-600' : 'local-text-emerald-600'}">${s.actual_dep_time || '---'}</td>
-                    <td class="local-py-3">${s.return_time || '---'}</td>
-                    <td class="local-py-3 local-font-bold ${s.actual_ret_time > s.return_time ? 'local-text-red-600' : 'local-text-emerald-600'}">${s.actual_ret_time || '---'}</td>
-                    <td class="local-py-3"><span class="local-px-2 local-py-0-5 local-rounded-full local-text-11px local-font-semibold local-bg-blue-100 local-text-blue-800">${s.status}</span></td>
-                    <td class="local-py-3 local-text-right"><button onclick="deleteSchedule(${s.id})"  style="background: transparent; border: none; outline: none; box-shadow: none; padding: 0; color: red; cursor: pointer;">Xóa</button></td>
-                </tr>
-            `).join('');
-
-            // Tài xế
-            document.getElementById('drivers-list').innerHTML = data.drivers.map(d => `
-                <tr>
-                    <td class="local-py-3 local-font-bold">${d.code}</td>
-                    <td class="local-py-3">${d.name}</td>
-                    <td class="local-py-3">${d.age || '---'} tuổi / ${d.gender}</td>
-                    <td class="local-py-3">
-                        <span class="local-px-2 local-py-0-5 local-rounded-full local-text-10px local-font-bold ${d.has_face ? 'local-bg-emerald-100 local-text-emerald-800' : 'local-bg-slate-100 local-text-slate-500'}">
-                            ${d.has_face ? '● Đã Sync Khuôn Mặt' : 'Chưa có Face Data'}
-                        </span>
-                    </td>
-                    <td class="local-py-3 local-text-right"><button onclick="deleteDriver(${d.id})"  style="background: transparent; border: none; outline: none; box-shadow: none; padding: 0; color: red; cursor: pointer;">Xóa</button></td>
-                </tr>
-            `).join('');
-
-            // Xe
-            document.getElementById('vehicles-list').innerHTML = data.vehicles.map(v => `
-                <tr>
-                    <td class="local-py-3 local-font-bold local-text-slate-800">${v.plate}</td>
-                    <td class="local-py-3">${v.vehicle_type}</td>
-                    <td class="local-py-3 local-text-right"><button onclick="deleteVehicle(${v.id})"  style="background: transparent; border: none; outline: none; box-shadow: none; padding: 0; color: red; cursor: pointer;">Xóa</button></td>
-                </tr>
-            `).join('');
-        }
-
-        // Submits
-        document.getElementById('add-schedule-form').addEventListener('submit', async (e) => {
-            e.preventDefault();
-            await fetch('/api/schedules', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    driver_id: document.getElementById('schedule-driver-id').value,
-                    vehicle_id: document.getElementById('schedule-vehicle-id').value,
-                    departure_time: document.getElementById('schedule-dep-time').value,
-                    return_time: document.getElementById('schedule-ret-time').value
-                })
-            });
-            e.target.reset();
-            loadData();
+        mediaStream = await navigator.mediaDevices.getUserMedia({
+            video: { width: 640, height: 480 }
         });
+        $('webcam').srcObject = mediaStream;
+        await $('webcam').play().catch(() => {});
+    } catch (error) {
+        closeCameraModal();
+        showError(error, 'Không thể mở camera. Hãy kiểm tra quyền truy cập camera.');
+    }
+}
 
-        document.getElementById('add-driver-form').addEventListener('submit', async (e) => {
-            e.preventDefault();
-            if (capturedImages.some(img => !img || !img.startsWith('data:image/jpeg;base64,'))) {
-                alert('Bạn phải chụp đủ 3 góc khuôn mặt trước khi lưu!');
-                return;
-            }
-            try {
-                const res = await fetch('/api/drivers', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        code: document.getElementById('driver-code').value,
-                        name: document.getElementById('driver-name').value,
-                        age: document.getElementById('driver-age').value,
-                        gender: document.getElementById('driver-gender').value,
-                        face_images: capturedImages
-                    })
-                });
-                const result = await res.json();
-                if (!res.ok || !result.success) {
-                    alert(result.message || 'Lưu tài xế thất bại!');
-                    return;
-                }
-                alert('Đã lưu tài xế thành công!');
-                e.target.reset();
-                resetCapture();
-                isDropdownPopulated = false;
-                await loadData();
-            } catch (err) {
-                console.error(err);
-                alert('Không thể kết nối máy chủ!');
-            }
-        });
+function closeCameraModal() {
+    if (mediaStream) {
+        mediaStream.getTracks().forEach((track) => track.stop());
+        mediaStream = null;
+    }
+    if ($('webcam')) $('webcam').srcObject = null;
+    $('camera-modal')?.classList.add('local-hidden');
+}
 
-        document.getElementById('add-vehicle-form').addEventListener('submit', async (e) => {
-            e.preventDefault();
-            await fetch('/api/vehicles', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    plate: document.getElementById('vehicle-plate').value,
-                    vehicle_type: document.getElementById('vehicle-type').value
-                })
-            });
-            e.target.reset();
+function captureNextAngle() {
+    if (currentStep >= 3) return;
+    const video = $('webcam');
+    if (!video || !video.videoWidth) {
+        alert('Camera chưa sẵn sàng. Vui lòng chờ hình ảnh xuất hiện.');
+        return;
+    }
+
+    const canvas = document.createElement('canvas');
+    canvas.width = video.videoWidth;
+    canvas.height = video.videoHeight;
+    const context = canvas.getContext('2d');
+    if (!context) {
+        alert('Không thể xử lý ảnh từ camera.');
+        return;
+    }
+
+    const image = canvas.toDataURL('image/jpeg', 0.85);
+    capturedImages[currentStep] = image;
+    $('cam-box')?.classList.add('flash-capture');
+    window.setTimeout(() => $('cam-box')?.classList.remove('flash-capture'), 300);
+    $('prev-' + (currentStep + 1)).src = image;
+    currentStep += 1;
+
+    const button = $('btn-capture-step');
+    if (currentStep === 1) {
+        $('guide-text').textContent = '2. Quay mặt NGHIÊNG TRÁI nhẹ';
+        button.innerHTML = '<i class="fa-solid fa-camera"></i><span>Chụp Frame 2 (Nghiêng Trái)</span>';
+    } else if (currentStep === 2) {
+        $('guide-text').textContent = '3. Quay mặt NGHIÊNG PHẢI nhẹ';
+        button.innerHTML = '<i class="fa-solid fa-camera"></i><span>Chụp Frame 3 (Nghiêng Phải)</span>';
+    } else {
+        $('guide-text').textContent = 'Đã thu thập đủ 3 góc mặt!';
+        button.textContent = 'Đã chụp đủ 3 góc';
+        button.disabled = true;
+        $('face-status-badge').className =
+            'local-text-xs local-bg-emerald-100 local-text-emerald-800 local-px-3 local-py-1 local-rounded-full local-font-bold';
+        $('face-status-badge').textContent = 'Đã thu thập đủ 3 góc khuôn mặt';
+        window.setTimeout(closeCameraModal, 800);
+    }
+}
+
+function resetCapture() {
+    capturedImages = [null, null, null];
+    currentStep = 0;
+    [1, 2, 3].forEach((index) => { $('prev-' + index).src = ''; });
+    $('guide-text').textContent = '1. Nhìn THẲNG vào camera';
+    const button = $('btn-capture-step');
+    button.disabled = false;
+    button.className =
+        'local-bg-blue-600 local-hover-bg-blue-700 local-text-white local-px-5 local-py-2 local-rounded-xl local-text-xs local-font-bold local-flex local-items-center local-space-x-2';
+    button.innerHTML = '<i class="fa-solid fa-camera"></i><span>Chụp Frame 1 (Thẳng)</span>';
+    const badge = $('face-status-badge');
+    badge.className =
+        'local-text-xs local-bg-amber-100 local-text-amber-800 local-px-3 local-py-1 local-rounded-full local-font-bold';
+    badge.textContent = 'Chưa quét khuôn mặt (Cần quét 3 góc)';
+}
+
+function renderSchedules(schedules) {
+    $('overview-schedules-list').innerHTML = schedules.slice(0, 5).map((s) => `
+        <tr class="local-hover-bg-slate-50">
+            <td class="local-py-3 local-font-bold local-text-slate-800">${escapeHtml(s.driver_name)}</td>
+            <td class="local-py-3 local-font-semibold local-text-blue-600">${escapeHtml(s.vehicle_plate)}</td>
+            <td class="local-py-3 local-text-slate-600">${escapeHtml(s.departure_time)} ${s.actual_dep_time ? `<span class="local-font-bold local-text-emerald-600">(${escapeHtml(s.actual_dep_time)})</span>` : ''}</td>
+            <td class="local-py-3 local-text-slate-600">${escapeHtml(s.return_time || '---')} ${s.actual_ret_time ? `<span class="local-font-bold local-text-emerald-600">(${escapeHtml(s.actual_ret_time)})</span>` : ''}</td>
+            <td class="local-py-3"><span class="local-px-2 local-py-0-5 local-rounded-full local-text-10px local-font-bold local-bg-blue-100 local-text-blue-800">${escapeHtml(s.status)}</span></td>
+        </tr>`).join('');
+    $('full-schedules-list').innerHTML = schedules.map((s) => `
+        <tr>
+            <td class="local-py-3 local-font-bold">${escapeHtml(s.driver_name)}</td>
+            <td class="local-py-3 local-font-semibold local-text-blue-600">${escapeHtml(s.vehicle_plate)}</td>
+            <td class="local-py-3">${escapeHtml(s.departure_time)}</td>
+            <td class="local-py-3 local-font-bold ${s.actual_dep_time && s.actual_dep_time > s.departure_time ? 'local-text-red-600' : 'local-text-emerald-600'}">${escapeHtml(s.actual_dep_time || '---')}</td>
+            <td class="local-py-3">${escapeHtml(s.return_time || '---')}</td>
+            <td class="local-py-3 local-font-bold ${s.actual_ret_time && s.return_time && s.actual_ret_time > s.return_time ? 'local-text-red-600' : 'local-text-emerald-600'}">${escapeHtml(s.actual_ret_time || '---')}</td>
+            <td class="local-py-3"><span class="local-px-2 local-py-0-5 local-rounded-full local-text-11px local-font-semibold local-bg-blue-100 local-text-blue-800">${escapeHtml(s.status)}</span></td>
+            <td class="local-py-3 local-text-right"><button type="button" class="btn-link" onclick="deleteSchedule(${Number(s.id)})">Xóa</button></td>
+        </tr>`).join('');
+}
+
+function renderDrivers(drivers) {
+    $('drivers-list').innerHTML = drivers.map((d) => `
+        <tr>
+            <td class="local-py-3 local-font-bold">${escapeHtml(d.code)}</td>
+            <td class="local-py-3">${escapeHtml(d.name)}</td>
+            <td class="local-py-3">${escapeHtml(d.age || '---')} tuổi / ${escapeHtml(d.gender || '---')}</td>
+            <td class="local-py-3"><span class="local-px-2 local-py-0-5 local-rounded-full local-text-10px local-font-bold ${d.has_face ? 'local-bg-emerald-100 local-text-emerald-800' : 'local-bg-slate-100 local-text-slate-500'}">${d.has_face ? 'Đã Sync Khuôn Mặt' : 'Chưa có Face Data'}</span></td>
+            <td class="local-py-3 local-text-right"><button type="button" class="btn-link" onclick="deleteDriver(${Number(d.id)})">Xóa</button></td>
+        </tr>`).join('');
+}
+
+function renderVehicles(vehicles) {
+    $('vehicles-list').innerHTML = vehicles.map((v) => `
+        <tr>
+            <td class="local-py-3 local-font-bold local-text-slate-800">${escapeHtml(v.plate)}</td>
+            <td class="local-py-3">${escapeHtml(v.vehicle_type)}</td>
+            <td class="local-py-3 local-text-right"><button type="button" class="btn-link" onclick="deleteVehicle(${Number(v.id)})">Xóa</button></td>
+        </tr>`).join('');
+}
+
+function renderNotes(notes) {
+    $('notes-container').innerHTML = notes.length ? notes.map((note) => `
+        <div class="local-p-3 local-bg-amber-50 local-border local-border-amber-200 local-rounded-xl local-space-y-1">
+            <div class="local-text-xs local-font-bold local-text-amber-900">${escapeHtml(note.title)}</div>
+            <div class="local-text-11px local-text-amber-800">${escapeHtml(note.content)}</div>
+        </div>`).join('') :
+        '<div class="local-text-xs local-text-slate-400 local-p-3 local-bg-slate-50 local-rounded-lg">Không có ghi chú trễ giờ nào.</div>';
+}
+
+function updateSelectOptions(elementId, items, getLabel) {
+    const select = $(elementId);
+    const selectedValue = select.value;
+    select.innerHTML = '<option value="">-- Chọn --</option>' + items.map((item) =>
+        `<option value="${Number(item.id)}">${escapeHtml(getLabel(item))}</option>`).join('');
+    if (items.some((item) => String(item.id) === selectedValue)) select.value = selectedValue;
+}
+
+async function loadData() {
+    if (isLoading) return;
+    isLoading = true;
+    try {
+        const data = await requestJson('/api/dashboard');
+        $('kpi-vehicles').textContent = data.kpi.total_vehicles ?? 0;
+        $('kpi-schedules').textContent = data.kpi.active_schedules ?? 0;
+        $('kpi-incidents').textContent = data.kpi.total_incidents ?? 0;
+        renderNotes(data.notes || []);
+        renderSchedules(data.schedules || []);
+        renderDrivers(data.drivers || []);
+        renderVehicles(data.vehicles || []);
+
+        if (!isDropdownPopulated) {
+            updateSelectOptions('schedule-driver-id', data.drivers || [],
+                (driver) => `${driver.name} (${driver.code})`);
+            updateSelectOptions('schedule-vehicle-id', data.vehicles || [],
+                (vehicle) => `${vehicle.plate} - ${vehicle.vehicle_type}`);
+            isDropdownPopulated = true;
+        }
+    } catch (error) {
+        if (error.message !== 'Phiên đăng nhập đã hết hạn.') {
+            console.error('Không thể tải dữ liệu dashboard:', error);
+        }
+    } finally {
+        isLoading = false;
+    }
+}
+
+async function submitJsonForm(event, url, payload, successMessage, afterSuccess) {
+    event.preventDefault();
+    const submitButton = event.submitter || event.target.querySelector('button[type="submit"]');
+    if (submitButton) submitButton.disabled = true;
+    try {
+        await requestJson(url, { method: 'POST', body: JSON.stringify(payload) });
+        if (successMessage) alert(successMessage);
+        event.target.reset();
+        if (afterSuccess) afterSuccess();
+        await loadData();
+    } catch (error) {
+        showError(error);
+    } finally {
+        if (submitButton) submitButton.disabled = false;
+    }
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+    $('add-schedule-form').addEventListener('submit', (event) => submitJsonForm(
+        event, '/api/schedules', {
+            driver_id: $('schedule-driver-id').value,
+            vehicle_id: $('schedule-vehicle-id').value,
+            departure_time: $('schedule-dep-time').value,
+            return_time: $('schedule-ret-time').value
+        }, 'Đã tạo lịch trình thành công!'
+    ));
+
+    $('add-driver-form').addEventListener('submit', (event) => {
+        event.preventDefault();
+        if (capturedImages.some((image) => !image || !image.startsWith('data:image/jpeg;base64,'))) {
+            alert('Bạn phải chụp đủ 3 góc khuôn mặt trước khi lưu!');
+            return;
+        }
+        submitJsonForm(event, '/api/drivers', {
+            code: $('driver-code').value,
+            name: $('driver-name').value,
+            age: $('driver-age').value,
+            gender: $('driver-gender').value,
+            face_images: capturedImages
+        }, 'Đã lưu tài xế thành công!', () => {
+            resetCapture();
             isDropdownPopulated = false;
-            loadData();
         });
+    });
 
-        async function deleteDriver(id) { if (confirm('Xóa tài xế này?')) { await fetch(`/api/drivers/${id}`, { method: 'DELETE' }); isDropdownPopulated = false; loadData(); } }
-        async function deleteVehicle(id) { if (confirm('Xóa xe này?')) { await fetch(`/api/vehicles/${id}`, { method: 'DELETE' }); isDropdownPopulated = false; loadData(); } }
-        async function deleteSchedule(id) { if (confirm('Xóa lịch trình này?')) { await fetch(`/api/schedules/${id}`, { method: 'DELETE' }); loadData(); } }
+    $('add-vehicle-form').addEventListener('submit', (event) => submitJsonForm(
+        event, '/api/vehicles', {
+            plate: $('vehicle-plate').value,
+            vehicle_type: $('vehicle-type').value
+        }, 'Đã thêm xe thành công!', () => { isDropdownPopulated = false; }
+    ));
 
-        loadData();
-        setInterval(loadData, 5000);
+    switchTab('overview');
+    loadData();
+    refreshTimer = window.setInterval(loadData, 10000);
+});
+
+async function deleteRecord(url, label, refreshDropdowns = false) {
+    if (!confirm(`Bạn có chắc muốn xóa ${label} này?`)) return;
+    try {
+        await requestJson(url, { method: 'DELETE' });
+        if (refreshDropdowns) isDropdownPopulated = false;
+        await loadData();
+    } catch (error) {
+        showError(error, 'Không thể xóa dữ liệu.');
+    }
+}
+
+function deleteDriver(id) { return deleteRecord(`/api/drivers/${Number(id)}`, 'tài xế', true); }
+function deleteVehicle(id) { return deleteRecord(`/api/vehicles/${Number(id)}`, 'xe', true); }
+function deleteSchedule(id) { return deleteRecord(`/api/schedules/${Number(id)}`, 'lịch trình'); }
