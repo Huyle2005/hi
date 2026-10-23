@@ -36,38 +36,23 @@
         </div>
 
         <div class="sidebar-footer">
-            
-
             <div class="profile-menu-wrap">
-            <button type="button" class="profile-trigger"
-                onclick="document.getElementById('profile-menu').classList.toggle('local-hidden')">
-                <span>{{ user_name }}</span>
-                <span>{{ user_role }}</span>
-                <span class="profile-avatar">N2</span>
-                <i class="fa-solid fa-chevron-down"></i>
-            </button>
-            
-            <div id="profile-menu" class="profile-dropdown local-hidden">
-                <div class="profile-menu-wrap">
                 <button type="button" class="profile-trigger"
                     onclick="document.getElementById('profile-menu').classList.toggle('local-hidden')">
-                    <span>{{ user_name }}</span>
-                    <span>{{ user_role }}</span>
+                    <span class="profile-info">
+                        <span class="profile-name">{{ user_name }}</span>
+                        <span class="profile-role">{{ user_role }}</span>
+                    </span>
                     <span class="profile-avatar">N2</span>
-                    <i class="fa-solid fa-chevron-down"></i>
                 </button>
 
-                
                 <div id="profile-menu" class="profile-dropdown local-hidden">
                     <a href="/logout" class="profile-logout">
                         <i class="fa-solid fa-right-from-bracket"></i>
                         <span>Đăng xuất</span>
                     </a>
                 </div>
-
             </div>
-            </div>
-        </div>
         </div>
     </aside>
 
