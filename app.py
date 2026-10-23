@@ -3,19 +3,21 @@ import base64
 import re
 from datetime import datetime
 from zoneinfo import ZoneInfo
-from flask import Flask, render_template, request, jsonify, session, redirect, url_for, send_from_directory
+from flask import (
+    Flask, render_template, request, jsonify, session,
+    redirect, url_for, send_from_directory,
+)
 import psycopg
 from psycopg.rows import dict_row
-from psycopg.errors import UniqueViolation, ForeignKeyViolation
-from werkzeug.security import check_password_hash, generate_password_hash
+from psycopg.errors import UniqueViolation
+from werkzeug.security import check_password_hash
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 TEMPLATE_DIR = os.path.join(BASE_DIR, 'templates')
 UPLOADS_DIR = os.path.join(BASE_DIR, 'face_dataset')
 
 
-if not os.path.exists(UPLOADS_DIR):
-    os.makedirs(UPLOADS_DIR)
+os.makedirs(UPLOADS_DIR, exist_ok=True)
 
 app = Flask(__name__, template_folder=TEMPLATE_DIR)
 app.secret_key = os.environ.get("SECRET_KEY")
@@ -37,22 +39,6 @@ def get_db():
     return psycopg.connect(database_url, row_factory=dict_row)
 
 
-
-def save_rfid_log(
-    rfid_uid,
-    tx=None,
-    event_type=None,
-    status="SUCCESS"
-):
-    with get_db() as conn:
-        conn.execute(
-            """
-            INSERT INTO rfid_logs
-                (rfid_uid, tx, event_type, status)
-            VALUES (%s, %s, %s, %s)
-            """,
-            (rfid_uid, tx, event_type, status)
-        )
 
 def init_db():
     with get_db() as conn:
@@ -113,7 +99,6 @@ def init_db():
             )
         ''')
 
-        # Khởi tạo dữ liệu mặc định
         conn.commit()
 
 
@@ -188,42 +173,68 @@ def get_dashboard_data():
     if 'user_id' not in session:
         return jsonify({"error": "Unauthorized"}), 401
 
-    conn = get_db()
-    drivers = [dict(r) for r in conn.execute(
-        "SELECT id, code, name, age, gender, phone, (face_img1 IS NOT NULL) as has_face FROM drivers ORDER BY id DESC").fetchall()]
-    vehicles = [dict(r) for r in conn.execute(
-        "SELECT * FROM vehicles ORDER BY id DESC").fetchall()]
-    incidents = [dict(r) for r in conn.execute(
-        "SELECT * FROM incidents ORDER BY id DESC").fetchall()]
+    # Dùng context manager để tự đóng kết nối sau khi đọc dữ liệu.
+    with get_db() as conn:
+        drivers = [dict(row) for row in conn.execute(
+            """
+            SELECT id, code, name, age, gender, phone,
+                   (face_img1 IS NOT NULL) AS has_face
+            FROM drivers
+            ORDER BY id DESC
+            """
+        ).fetchall()]
 
-    schedules = [dict(r) for r in conn.execute('''
-        SELECT s.*, d.name as driver_name, v.plate as vehicle_plate, v.vehicle_type 
-        FROM schedules s
-        JOIN drivers d ON s.driver_id = d.id
-        JOIN vehicles v ON s.vehicle_id = v.id
-        ORDER BY s.id DESC
-    ''').fetchall()]
+        vehicles = [dict(row) for row in conn.execute(
+            "SELECT * FROM vehicles ORDER BY id DESC"
+        ).fetchall()]
 
-    # Tính toán Ghi chú trễ giờ dựa trên dữ liệu camera quét thực tế
+        incidents = [dict(row) for row in conn.execute(
+            "SELECT * FROM incidents ORDER BY id DESC"
+        ).fetchall()]
+
+        schedules = [dict(row) for row in conn.execute(
+            """
+            SELECT s.*, d.name AS driver_name,
+                   v.plate AS vehicle_plate, v.vehicle_type
+            FROM schedules s
+            JOIN drivers d ON s.driver_id = d.id
+            JOIN vehicles v ON s.vehicle_id = v.id
+            ORDER BY s.id DESC
+            """
+        ).fetchall()]
+
+    # Tính ghi chú trễ giờ dựa trên thời gian camera ghi nhận.
     notes = []
-    for s in schedules:
-        dep_plan = s['departure_time']
-        dep_act = s.get('actual_dep_time') or ''
-        ret_plan = s.get('return_time') or ''
-        ret_act = s.get('actual_ret_time') or ''
+    for schedule in schedules:
+        dep_plan = schedule['departure_time']
+        dep_actual = schedule.get('actual_dep_time') or ''
+        ret_plan = schedule.get('return_time') or ''
+        ret_actual = schedule.get('actual_ret_time') or ''
 
-        if dep_act and dep_act > dep_plan:
+        if dep_actual and dep_actual > dep_plan:
             notes.append({
                 "type": "warning",
-                "title": f"Tài xế: {s['driver_name']} ({s['vehicle_plate']})",
-                "content": f"Xuất phát TRỄ so với lịch đăng ký ({dep_act} vs {dep_plan})"
+                "title": (
+                    f"Tài xế: {schedule['driver_name']} "
+                    f"({schedule['vehicle_plate']})"
+                ),
+                "content": (
+                    "Xuất phát TRỄ so với lịch đăng ký "
+                    f"({dep_actual} vs {dep_plan})"
+                )
             })
 
-        if ret_act and ret_plan and ret_act > ret_plan:
+        if ret_actual and ret_plan and ret_actual > ret_plan:
             notes.append({
                 "type": "danger",
-                "title": f"Tài xế: {s['driver_name']} ({s['vehicle_plate']})",
-                "content": f"Về bãi TRỄ so với lịch dự kiến ({ret_act} vs {ret_plan})"
+                "title": (
+                    f"Tài xế: {schedule['driver_name']} "
+                    f"({schedule['vehicle_plate']})"
+                ),
+                "content": (
+                    "Về bãi TRỄ so với lịch dự kiến "
+                    f"({ret_actual} vs {ret_plan})"
+                )
             })
 
     return jsonify({
@@ -234,8 +245,12 @@ def get_dashboard_data():
         "notes": notes,
         "kpi": {
             "total_vehicles": len(vehicles),
-            "active_schedules": len([s for s in schedules if s['status'] == 'Đang chạy']),
-            "total_incidents": len([i for i in incidents if i['status'] == 'Chờ xử lý'])
+            "active_schedules": sum(
+                schedule['status'] == 'Đang chạy' for schedule in schedules
+            ),
+            "total_incidents": sum(
+                incident['status'] == 'Chờ xử lý' for incident in incidents
+            )
         }
     })
 
