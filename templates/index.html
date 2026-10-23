@@ -136,23 +136,47 @@
                 <h2 class="local-font-bold local-text-slate-800 local-text-base">Tạo Lịch Trình Xe Mới</h2>
                 <form id="add-schedule-form" class="local-grid local-grid-cols-5 local-gap-4 local-text-xs">
                     <div>
-                        <label class="local-block local-mb-1 local-text-slate-500 local-font-semibold">Tài xế</label>
-                        <select id="schedule-driver-id" class="local-w-full local-p-2 local-border local-rounded-lg local-outline-none" required></select>
+                        <label class="local-block local-mb-1 local-text-slate-500 local-font-semibold">
+                            Tài xế
+                        </label>
+                        <select id="schedule-driver-id"
+                                class="local-w-full local-p-2 local-border local-rounded-lg local-outline-none"
+                                required></select>
                     </div>
+
                     <div>
-                        <label class="local-block local-mb-1 local-text-slate-500 local-font-semibold">Biển số xe</label>
-                        <select id="schedule-vehicle-id" class="local-w-full local-p-2 local-border local-rounded-lg local-outline-none" required></select>
+                        <label class="local-block local-mb-1 local-text-slate-500 local-font-semibold">
+                            Biển số xe
+                        </label>
+                        <select id="schedule-vehicle-id"
+                                class="local-w-full local-p-2 local-border local-rounded-lg local-outline-none"
+                                required></select>
                     </div>
+
                     <div>
-                        <label class="local-block local-mb-1 local-text-slate-500 local-font-semibold">Giờ xuất bến (Dự kiến)</label>
-                        <input type="time" id="schedule-dep-time" class="local-w-full local-p-2 local-border local-rounded-lg local-outline-none" required>
+                        <label class="local-block local-mb-1 local-text-slate-500 local-font-semibold">
+                            Ngày và giờ xuất bến
+                        </label>
+                        <input type="datetime-local"
+                            id="schedule-dep-time"
+                            class="local-w-full local-p-2 local-border local-rounded-lg local-outline-none"
+                            required>
                     </div>
+
                     <div>
-                        <label class="local-block local-mb-1 local-text-slate-500 local-font-semibold">Giờ về bãi (Dự kiến)</label>
-                        <input type="time" id="schedule-ret-time" class="local-w-full local-p-2 local-border local-rounded-lg local-outline-none">
+                        <label class="local-block local-mb-1 local-text-slate-500 local-font-semibold">
+                            Ngày và giờ về bãi
+                        </label>
+                        <input type="datetime-local"
+                            id="schedule-ret-time"
+                            class="local-w-full local-p-2 local-border local-rounded-lg local-outline-none">
                     </div>
+
                     <div class="local-flex local-items-end">
-                        <button type="submit" class="local-w-full local-bg-blue-600 local-text-white local-p-2 local-rounded-lg local-font-bold local-hover-bg-blue-700 local-transition">Tạo Lịch Trình</button>
+                        <button type="submit"
+                                class="local-w-full local-bg-blue-600 local-text-white local-p-2 local-rounded-lg local-font-bold local-hover-bg-blue-700 local-transition">
+                            Tạo Lịch Trình
+                        </button>
                     </div>
                 </form>
             </div>

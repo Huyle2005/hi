@@ -248,14 +248,17 @@ async function submitJsonForm(event, url, payload, successMessage, afterSuccess)
 }
 
 document.addEventListener('DOMContentLoaded', () => {
-    $('add-schedule-form').addEventListener('submit', (event) => submitJsonForm(
-        event, '/api/schedules', {
-            driver_id: $('schedule-driver-id').value,
-            vehicle_id: $('schedule-vehicle-id').value,
-            departure_time: $('schedule-dep-time').value,
-            return_time: $('schedule-ret-time').value
-        }, 'Đã tạo lịch trình thành công!'
-    ));
+    $('add-schedule-form').addEventListener('submit', (event) => {
+    const departure = $('schedule-dep-time').value;
+    const returnTime = $('schedule-ret-time').value;
+
+    submitJsonForm(event, '/api/schedules', {
+        driver_id: $('schedule-driver-id').value,
+        vehicle_id: $('schedule-vehicle-id').value,
+        departure_time: departure ? departure.replace('T', ' ') : '',
+        return_time: returnTime ? returnTime.replace('T', ' ') : ''
+    }, 'Đã tạo lịch trình thành công!');
+    });
 
     $('add-driver-form').addEventListener('submit', (event) => {
         event.preventDefault();
