@@ -1179,30 +1179,56 @@ body > main {
     flex-shrink: 0;
 }
 
+
+/* Khôi phục kiểu tài khoản như giao diện cũ */
 .profile-trigger {
     display: flex;
     align-items: center;
     justify-content: center;
     gap: 10px;
-    padding: 8px 12px;
-    border: 1px solid rgba(255, 255, 255, 0.3);
-    border-radius: 24px;
+    padding: 0;
+    border: none;
+    border-radius: 0;
     background: transparent;
     color: #fff;
     cursor: pointer;
+    box-shadow: none;
 }
 
+/* Bỏ dấu mũi tên */
+.profile-trigger .fa-chevron-down {
+    display: none;
+}
+
+/* Avatar N2 */
 .profile-avatar {
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    width: 36px;
-    height: 36px;
+    width: 44px;
+    height: 44px;
     border-radius: 50%;
     background: #2563eb;
-    color: white;
+    color: #fff;
     font-weight: 700;
 }
+
+
+.profile-trigger > span:not(.profile-avatar) {
+    display: block;
+    text-align: right;
+}
+
+.profile-trigger > span:nth-child(1) {
+    font-weight: 700;
+}
+
+.profile-trigger > span:nth-child(2) {
+    font-size: 12px;
+    opacity: 0.8;
+}
+
+
 
 .profile-role {
     font-size: 12px;
