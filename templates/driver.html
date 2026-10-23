@@ -157,14 +157,10 @@
                 </div>
 
                 <div class="grid grid-cols-1 md:grid-cols-3 gap-3 mt-5">
-                    <input id="search-input"
-                           type="search"
-                           list="driver-name-options"
-                           autocomplete="off"
-                           placeholder="Chọn hoặc nhập tên tài xế..."
-                           class="border border-slate-300 rounded-lg px-3 py-2 text-sm
-                                  focus:outline-none focus:ring-2 focus:ring-blue-500">
-                    <datalist id="driver-name-options"></datalist>
+                    <select id="search-input"
+                            class="border border-slate-300 rounded-lg px-3 py-2 text-sm">
+                        <option value="">Tất cả tài xế</option>
+                    </select>
 
                     <select id="status-filter"
                             class="border border-slate-300 rounded-lg px-3 py-2 text-sm">
@@ -260,14 +256,22 @@
 
 
         function populateDriverNames(schedules) {
-            const datalist = document.getElementById('driver-name-options');
+            const select = document.getElementById('search-input');
+            const previousValue = select.value;
             const names = [...new Set(
                 schedules.map(item => String(item.driver_name || '').trim())
                     .filter(Boolean)
             )].sort((a, b) => a.localeCompare(b, 'vi'));
-            datalist.innerHTML = names.map(name =>
-                '<option value="' + escapeHTML(name) + '"></option>'
-            ).join('');
+
+            select.innerHTML = '<option value="">Tất cả tài xế</option>' +
+                names.map(name =>
+                    '<option value="' + escapeHTML(name) + '">' +
+                    escapeHTML(name) + '</option>'
+                ).join('');
+
+            if (names.includes(previousValue)) {
+                select.value = previousValue;
+            }
         }
 
         function statusClass(status) {
@@ -295,7 +299,7 @@
 
             const filtered = allSchedules.filter(item => {
                 // Ô tìm kiếm chỉ khớp tên tài xế, không tìm theo mã hoặc biển số.
-                const matchesName = normalize(item.driver_name).includes(keyword);
+                const matchesName = !keyword || normalize(item.driver_name) === keyword;
                 const matchesStatus = !selectedStatus ||
                     normalize(item.status) === selectedStatus;
 
@@ -451,7 +455,7 @@
         }
 
         document.getElementById('search-input')
-            .addEventListener('input', renderSchedules);
+            .addEventListener('change', renderSchedules);
 
         document.getElementById('status-filter')
             .addEventListener('change', renderSchedules);
