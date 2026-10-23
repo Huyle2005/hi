@@ -10,7 +10,6 @@
 </head>
 <body class="local-bg-slate-100 local-text-slate-800 local-font-sans local-h-screen local-flex local-overflow-hidden">
 
-    <!-- SIDEBAR BÊN TRÁI -->
     <aside class="app-sidebar">
         <div>
             <img src="{{ url_for('static', filename='images/logo.png') }}"
@@ -47,7 +46,13 @@
                 <span class="profile-avatar">N2</span>
                 <i class="fa-solid fa-chevron-down"></i>
             </button>
-
+            <div class="local-text-right">
+                    <div class="local-text-sm local-font-bold local-text-blue-900">{{ user_name }}</div>
+                    <div class="local-text-xs local-text-slate-500">{{ user_role }}</div>
+                </div>
+                <div class="local-w-9 local-h-9 local-bg-blue-600 local-text-white local-font-bold local-rounded-full local-flex local-items-center local-justify-center local-text-sm local-shadow">
+                    N2
+                </div>
             <div id="profile-menu" class="profile-dropdown local-hidden">
                 <div class="profile-menu-wrap">
                 <button type="button" class="profile-trigger"
