@@ -4,22 +4,436 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Trang tài xế - IUH Smart Parking</title>
+    <title>Chi tiết lịch trình | IUH Smart Parking</title>
+
     <script src="https://cdn.tailwindcss.com"></script>
+
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background: #f1f5f9;
+        }
+
+        .status {
+            display: inline-block;
+            padding: 5px 10px;
+            border-radius: 999px;
+            font-size: 12px;
+            font-weight: 600;
+            white-space: nowrap;
+        }
+
+        .status-running {
+            background: #dbeafe;
+            color: #1d4ed8;
+        }
+
+        .status-done {
+            background: #dcfce7;
+            color: #15803d;
+        }
+
+        .status-waiting {
+            background: #fef3c7;
+            color: #92400e;
+        }
+
+        .status-other {
+            background: #e2e8f0;
+            color: #475569;
+        }
+
+        th, td {
+            padding: 14px 16px;
+            text-align: left;
+            border-bottom: 1px solid #e2e8f0;
+        }
+
+        th {
+            background: #f8fafc;
+            color: #475569;
+            font-size: 12px;
+            text-transform: uppercase;
+            white-space: nowrap;
+        }
+
+        td {
+            font-size: 13px;
+            color: #334155;
+        }
+
+        tr:hover td {
+            background: #f8fafc;
+        }
+    </style>
 </head>
-<body class="bg-slate-100 min-h-screen">
-    <header class="bg-blue-900 text-white p-5 flex justify-between">
-        <h1 class="font-bold">IUH Smart Parking - Tài xế</h1>
-        <a href="/logout" class="underline">Đăng xuất</a>
+
+<body>
+    <header class="bg-slate-900 text-white shadow">
+        <div class="max-w-screen-2xl mx-auto px-6 py-5
+                    flex flex-wrap justify-between items-center gap-4">
+            <div>
+                <h1 class="text-xl font-bold">IUH Smart Parking</h1>
+                <p class="text-sm text-slate-300 mt-1">
+                    Chi tiết lịch trình vận hành
+                </p>
+            </div>
+
+            <div class="flex items-center gap-4">
+                <div class="text-right">
+                    <p class="text-xs text-slate-300">Xin chào</p>
+                    <p class="font-semibold">
+                        {{ user_name | e }}
+                    </p>
+                </div>
+
+                <a href="/logout"
+                   class="bg-slate-700 hover:bg-slate-600
+                          px-4 py-2 rounded-lg text-sm">
+                    Đăng xuất
+                </a>
+            </div>
+        </div>
     </header>
 
-    <main class="max-w-4xl mx-auto p-6">
-        <h2 class="text-2xl font-bold mb-3">
-            Xin chào, {{ user_name }}!
-        </h2>
-        <p class="text-slate-600">
-            Đây là trang dành riêng cho tài xế.
-        </p>
+    <main class="max-w-screen-2xl mx-auto p-6 space-y-6">
+
+        <section class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
+            <div class="bg-white p-5 rounded-xl shadow-sm border border-slate-200">
+                <p class="text-sm text-slate-500">Tổng lịch trình</p>
+                <p id="total-count" class="text-3xl font-bold mt-2">--</p>
+            </div>
+
+            <div class="bg-white p-5 rounded-xl shadow-sm border border-slate-200">
+                <p class="text-sm text-slate-500">Chờ xuất bến</p>
+                <p id="waiting-count" class="text-3xl font-bold mt-2 text-amber-600">--</p>
+            </div>
+
+            <div class="bg-white p-5 rounded-xl shadow-sm border border-slate-200">
+                <p class="text-sm text-slate-500">Đang chạy</p>
+                <p id="running-count" class="text-3xl font-bold mt-2 text-blue-600">--</p>
+            </div>
+
+            <div class="bg-white p-5 rounded-xl shadow-sm border border-slate-200">
+                <p class="text-sm text-slate-500">Hoàn thành</p>
+                <p id="done-count" class="text-3xl font-bold mt-2 text-green-600">--</p>
+            </div>
+        </section>
+
+        <section class="bg-white rounded-xl shadow-sm border border-slate-200">
+            <div class="p-5 border-b border-slate-200">
+                <div class="flex flex-wrap justify-between items-center gap-3">
+                    <div>
+                        <h2 class="text-lg font-bold text-slate-800">
+                            Lịch trình tất cả tài xế
+                        </h2>
+                        <p class="text-sm text-slate-500 mt-1">
+                            Theo dõi thời gian xuất bến, về bến và trạng thái.
+                        </p>
+                    </div>
+
+                    <button id="refresh-button"
+                            onclick="loadSchedules()"
+                            class="bg-blue-600 hover:bg-blue-700
+                                   text-white px-4 py-2 rounded-lg text-sm">
+                        ↻ Làm mới
+                    </button>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-3 mt-5">
+                    <input id="search-input"
+                           type="search"
+                           placeholder="Tìm tài xế, biển số xe..."
+                           class="border border-slate-300 rounded-lg px-3 py-2 text-sm
+                                  focus:outline-none focus:ring-2 focus:ring-blue-500">
+
+                    <select id="status-filter"
+                            class="border border-slate-300 rounded-lg px-3 py-2 text-sm">
+                        <option value="">Tất cả trạng thái</option>
+                        <option value="chờ xuất bến">Chờ xuất bến</option>
+                        <option value="đang chạy">Đang chạy</option>
+                        <option value="hoàn thành">Hoàn thành</option>
+                        <option value="đang chạy">Đang chạy</option>
+                    </select>
+
+                    <p id="last-updated"
+                       class="text-xs text-slate-500 self-center">
+                        Đang tải dữ liệu...
+                    </p>
+                </div>
+            </div>
+
+            <div id="error-message"
+                 class="hidden m-5 p-4 rounded-lg bg-red-50 text-red-700 text-sm">
+            </div>
+
+            <div class="overflow-x-auto">
+                <table class="w-full">
+                    <thead>
+                        <tr>
+                            <th>#</th>
+                            <th>Tài xế</th>
+                            <th>Mã tài xế</th>
+                            <th>Biển số xe</th>
+                            <th>Loại xe</th>
+                            <th>Giờ xuất bến</th>
+                            <th>Giờ về bến</th>
+                            <th>Thực tế xuất bến</th>
+                            <th>Thực tế về bến</th>
+                            <th>Trạng thái</th>
+                        </tr>
+                    </thead>
+
+                    <tbody id="schedule-table">
+                        <tr>
+                            <td colspan="10" class="text-center py-10 text-slate-500">
+                                Đang tải lịch trình...
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="p-4 border-t border-slate-200 text-sm text-slate-500">
+                Số lịch trình hiển thị:
+                <strong id="visible-count">0</strong>
+            </div>
+        </section>
     </main>
+
+    <script>
+        let allSchedules = [];
+
+        function escapeHTML(value) {
+            return String(value ?? '').replace(/[&<>"']/g, char => ({
+                '&': '&amp;',
+                '<': '&lt;',
+                '>': '&gt;',
+                '"': '&quot;',
+                "'": '&#39;'
+            })[char]);
+        }
+
+        function formatDate(value) {
+            if (!value) return '—';
+
+            const date = new Date(value);
+
+            if (Number.isNaN(date.getTime())) {
+                return escapeHTML(value);
+            }
+
+            return date.toLocaleString('vi-VN', {
+                day: '2-digit',
+                month: '2-digit',
+                year: 'numeric',
+                hour: '2-digit',
+                minute: '2-digit'
+            });
+        }
+
+        function normalize(value) {
+            return String(value ?? '')
+                .normalize('NFD')
+                .replace(/[\u0300-\u036f]/g, '')
+                .toLowerCase()
+                .trim();
+        }
+
+        function statusClass(status) {
+            const s = normalize(status);
+
+            if (s.includes('dang chay')) return 'status-running';
+            if (s.includes('hoan thanh') || s.includes('da hoan thanh')) {
+                return 'status-done';
+            }
+            if (s.includes('cho xuat ben') || s.includes('cho')) {
+                return 'status-waiting';
+            }
+
+            return 'status-other';
+        }
+
+        function renderSchedules() {
+            const keyword = normalize(
+                document.getElementById('search-input').value
+            );
+
+            const selectedStatus = normalize(
+                document.getElementById('status-filter').value
+            );
+
+            const filtered = allSchedules.filter(item => {
+                const searchText = normalize([
+                    item.driver_name,
+                    item.driver_code,
+                    item.vehicle_plate,
+                    item.plate,
+                    item.vehicle_type,
+                    item.status
+                ].join(' '));
+
+                const matchesKeyword = searchText.includes(keyword);
+                const matchesStatus = !selectedStatus ||
+                    normalize(item.status) === selectedStatus;
+
+                return matchesKeyword && matchesStatus;
+            });
+
+            document.getElementById('visible-count').textContent =
+                filtered.length;
+
+            const tbody = document.getElementById('schedule-table');
+
+            if (filtered.length === 0) {
+                tbody.innerHTML = `
+                    <tr>
+                        <td colspan="10"
+                            class="text-center py-10 text-slate-500">
+                            Không tìm thấy lịch trình phù hợp.
+                        </td>
+                    </tr>`;
+                return;
+            }
+
+            tbody.innerHTML = filtered.map((item, index) => `
+                <tr>
+                    <td>${index + 1}</td>
+                    <td class="font-semibold">
+                        ${escapeHTML(item.driver_name || '—')}
+                    </td>
+                    <td>${escapeHTML(item.driver_code || '—')}</td>
+                    <td class="font-medium">
+                        ${escapeHTML(item.vehicle_plate || item.plate || '—')}
+                    </td>
+                    <td>${escapeHTML(item.vehicle_type || '—')}</td>
+                    <td>${formatDate(item.departure_time)}</td>
+                    <td>${formatDate(item.return_time)}</td>
+                    <td>${formatDate(item.actual_dep_time)}</td>
+                    <td>${formatDate(item.actual_ret_time)}</td>
+                    <td>
+                        <span class="status ${statusClass(item.status)}">
+                            ${escapeHTML(item.status || 'Chưa xác định')}
+                        </span>
+                    </td>
+                </tr>
+            `).join('');
+        }
+
+        async function loadSchedules() {
+            const errorBox = document.getElementById('error-message');
+            const tbody = document.getElementById('schedule-table');
+            const refreshButton = document.getElementById('refresh-button');
+
+            errorBox.classList.add('hidden');
+            refreshButton.disabled = true;
+            refreshButton.textContent = 'Đang tải...';
+
+            try {
+                // Dùng API dashboard hiện có.
+                const response = await fetch('/api/dashboard', {
+                    credentials: 'same-origin'
+                });
+
+                if (!response.ok) {
+                    throw new Error(
+                        response.status === 401
+                            ? 'Phiên đăng nhập hết hạn hoặc chưa đăng nhập.'
+                            : response.status === 403
+                                ? 'API hiện không cho tài khoản này xem dữ liệu. Cần kiểm tra quyền truy cập backend.'
+                                : 'Không thể lấy dữ liệu từ máy chủ (HTTP ' +
+                                  response.status + ').'
+                    );
+                }
+
+                const data = await response.json();
+
+                if (!Array.isArray(data.schedules)) {
+                    throw new Error(
+                        'API không trả về danh sách schedules. Cần kiểm tra cấu trúc dữ liệu API.'
+                    );
+                }
+
+                const drivers = Array.isArray(data.drivers)
+                    ? data.drivers
+                    : [];
+
+                const vehicles = Array.isArray(data.vehicles)
+                    ? data.vehicles
+                    : [];
+
+                const driverMap = new Map(
+                    drivers.map(d => [String(d.id), d])
+                );
+
+                const vehicleMap = new Map(
+                    vehicles.map(v => [String(v.id), v])
+                );
+
+                allSchedules = data.schedules.map(s => {
+                    const driver = driverMap.get(String(s.driver_id)) || {};
+                    const vehicle = vehicleMap.get(String(s.vehicle_id)) || {};
+
+                    return {
+                        ...s,
+                        driver_name: s.driver_name || driver.name || '—',
+                        driver_code: s.driver_code || driver.code || '—',
+                        vehicle_plate: s.vehicle_plate || vehicle.plate || vehicle.license_plate || '—',
+                        vehicle_type: s.vehicle_type || vehicle.vehicle_type || vehicle.type || '—'
+                    };
+                });
+
+                document.getElementById('total-count').textContent =
+                    allSchedules.length;
+
+                document.getElementById('waiting-count').textContent =
+                    allSchedules.filter(s =>
+                        normalize(s.status).includes('cho xuat ben')
+                    ).length;
+
+                document.getElementById('running-count').textContent =
+                    allSchedules.filter(s =>
+                        normalize(s.status).includes('dang chay')
+                    ).length;
+
+                document.getElementById('done-count').textContent =
+                    allSchedules.filter(s =>
+                        normalize(s.status).includes('hoan thanh')
+                    ).length;
+
+                renderSchedules();
+
+                document.getElementById('last-updated').textContent =
+                    'Cập nhật lúc ' +
+                    new Date().toLocaleTimeString('vi-VN');
+
+            } catch (error) {
+                console.error('Lỗi tải lịch trình:', error);
+
+                errorBox.textContent = error.message;
+                errorBox.classList.remove('hidden');
+
+                tbody.innerHTML = `
+                    <tr>
+                        <td colspan="10"
+                            class="text-center py-10 text-red-600">
+                            Không tải được lịch trình.
+                        </td>
+                    </tr>`;
+            } finally {
+                refreshButton.disabled = false;
+                refreshButton.textContent = '↻ Làm mới';
+            }
+        }
+
+        document.getElementById('search-input')
+            .addEventListener('input', renderSchedules);
+
+        document.getElementById('status-filter')
+            .addEventListener('change', renderSchedules);
+
+        loadSchedules();
+        setInterval(loadSchedules, 15000);
+    </script>
 </body>
 </html>
