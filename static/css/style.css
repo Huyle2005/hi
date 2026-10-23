@@ -773,623 +773,12 @@ form textarea {
     color: #065f46
 }
 
-/* Thanh bên IUH Smart Parking */
-.app-sidebar {
-    box-sizing: border-box;
-    width: 280px;
-    min-width: 280px;
-    height: 100vh;
-    display: flex;
-    flex-direction: column;
-    justify-content: space-between;
-    flex-shrink: 0;
-    padding: 20px;
-    background: #0a1931;
-    color: #fff;
-    overflow-y: auto
-}
 
-.sidebar-logo {
-    display: block;
-    box-sizing: border-box;
-    width: 250px;
-    height: 100px;
-    object-fit: contain;
-    object-position: center center;
-    flex-shrink: 0;
-    border: 2px solid #fff;
-    border-radius: 22px;
-    padding: 10px;
-    margin: 0 auto 10px
-}
+/* =========================================================
+   IUH SMART PARKING — THANH ĐIỀU HƯỚNG NGANG
+   Các selector sidebar/profile được khai báo tập trung tại đây.
+   ========================================================= */
 
-.sidebar-title {
-    margin: 0 0 10px;
-    padding: 0 8px;
-    color: #aab8cc;
-    font-size: 12px;
-    font-weight: 600;
-    letter-spacing: .09em;
-    text-transform: uppercase
-}
-
-.sidebar-nav {
-    display: flex;
-    flex-direction: column;
-    gap: 8px;
-    font-size: 14px;
-    font-weight: 500
-}
-
-.sidebar-nav-link {
-    appearance: none;
-    -webkit-appearance: none;
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    width: 100%;
-    min-height: 52px;
-    padding: 12px 14px;
-    margin: 0;
-    border: 1px solid transparent;
-    border-radius: 16px;
-    background: transparent;
-    color: #c5d1e0;
-    text-align: left;
-    font-size: 14px;
-    font-weight: 500;
-    line-height: 1.4;
-    box-shadow: none;
-    outline: none;
-    transition: background .18s ease, color .18s ease
-}
-
-.sidebar-nav-link i {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    width: 18px;
-    min-width: 18px;
-    font-size: 16px;
-    color: #9fb2cb
-}
-
-.sidebar-nav-link:hover {
-    background: #172943;
-    color: #fff
-}
-
-.sidebar-nav-link:hover i {
-    color: #fff
-}
-
-.sidebar-nav-link.is-active,
-.sidebar-nav-link.is-active:hover {
-    background: #2563eb;
-    color: #fff;
-    border-color: transparent;
-    box-shadow: 0 4px 12px rgb(37 99 235 / .18)
-}
-
-.sidebar-nav-link.is-active i {
-    color: #fff
-}
-
-.sidebar-footer {
-    display: flex;
-    flex-direction: column;
-    gap: 14px;
-    margin-top: 28px
-}
-
-.sidebar-status-card {
-    padding: 17px 15px;
-    border: 1px solid #304159;
-    border-radius: 16px;
-    background: #17263b;
-    color: #34d399;
-    font-size: 13px
-}
-
-.sidebar-status {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    font-weight: 500
-}
-
-.sidebar-status-dot {
-    width: 10px;
-    height: 10px;
-    flex: 0 0 10px;
-    border-radius: 50%;
-    background: #34d399;
-    animation: pulse 2s infinite
-}
-
-.sidebar-logout {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 9px;
-    width: 100%;
-    min-height: 44px;
-    padding: 11px 14px;
-    border: 1px solid transparent;
-    border-radius: 15px;
-    background: #3a1b30;
-    color: #f87171;
-    text-decoration: none;
-    font-size: 13px;
-    font-weight: 700;
-    transition: background .18s ease, color .18s ease
-}
-
-.sidebar-logout:hover {
-    background: #dc2626;
-    color: #fff
-}
-
-@media(max-width:700px) {
-    .app-sidebar {
-        width: 100%;
-        min-width: 0;
-        height: auto;
-        min-height: 100vh;
-        padding: 18px
-    }
-
-    .sidebar-logo {
-        width: 188px;
-        height: 188px;
-        margin-left: auto;
-        margin-right: auto
-    }
-
-    .sidebar-title {
-        text-align: center
-    }
-
-    .sidebar-nav-link {
-        min-height: 48px
-    }
-
-    .sidebar-footer {
-        margin-top: 24px
-    }
-}
-
-/* ===== CHUYỂN SIDEBAR DỌC THÀNH THANH ĐIỀU HƯỚNG NGANG ===== */
-
-body {
-    flex-direction: column;
-}
-
-/* Thanh điều hướng phía trên */
-.app-sidebar {
-    width: 100%;
-    min-width: 0;
-    height: auto;
-    min-height: 82px;
-    flex-direction: row;
-    align-items: center;
-    justify-content: space-between;
-    gap: 24px;
-    padding: 10px 28px;
-    overflow: visible;
-    background: linear-gradient(100deg, #416b9f, #245477);
-    border-bottom: 1px solid rgba(255, 255, 255, 0.2);
-    z-index: 20;
-}
-
-/* Logo, tiêu đề và menu nằm trên cùng một hàng */
-.app-sidebar > div:first-child {
-    display: flex;
-    flex: 1;
-    min-width: 0;
-    align-items: center;
-    gap: 24px;
-}
-
-/* Logo */
-.sidebar-logo {
-    width: 125px;
-    height: 58px;
-    flex-shrink: 0;
-    object-fit: contain;
-    padding: 2px;
-    margin: 0;
-    border: none;
-    border-radius: 0;
-}
-
-/* Tiêu đề hệ thống */
-.sidebar-title {
-    margin: 0;
-    padding: 0;
-    color: #fff;
-    white-space: nowrap;
-    font-size: 13px;
-}
-
-/* Các mục menu nằm ngang */
-.sidebar-nav {
-    display: flex;
-    flex-direction: row;
-    align-items: center;
-    justify-content: center;
-    flex: 1;
-    gap: 8px;
-    min-width: 0;
-}
-
-.sidebar-nav-link {
-    width: auto;
-    min-height: 54px;
-    padding: 12px 16px;
-    justify-content: center;
-    gap: 9px;
-    border: none;
-    border-radius: 0;
-    border-bottom: 3px solid transparent;
-    color: #e4edf7;
-    white-space: nowrap;
-}
-
-.sidebar-nav-link i {
-    color: inherit;
-}
-
-.sidebar-nav-link:hover {
-    background: rgba(255, 255, 255, 0.1);
-    color: #fff;
-}
-
-/* Tab đang chọn: gạch chân như ảnh mẫu */
-.sidebar-nav-link.is-active,
-.sidebar-nav-link.is-active:hover {
-    background: transparent;
-    border-color: #fff;
-    border-bottom-color: #fff;
-    color: #fff;
-    box-shadow: none;
-}
-
-.sidebar-nav-link.is-active i {
-    color: #fff;
-}
-
-/* Trạng thái hệ thống và đăng xuất ở bên phải */
-.sidebar-footer {
-    flex-direction: row;
-    align-items: center;
-    gap: 12px;
-    margin-top: 0;
-    flex-shrink: 0;
-}
-
-.sidebar-status-card {
-    padding: 8px 10px;
-    border: 1px solid rgba(255, 255, 255, 0.25);
-    border-radius: 12px;
-    background: rgba(255, 255, 255, 0.08);
-}
-
-.sidebar-status {
-    white-space: nowrap;
-    font-size: 12px;
-}
-
-.sidebar-logout {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    gap: 8px;
-    padding: 12px 16px;
-    border: 1px solid rgba(255, 255, 255, 0.45);
-    border-radius: 24px;
-    color: #fff;
-    text-decoration: none;
-    white-space: nowrap;
-}
-
-.sidebar-logout:hover {
-    background: rgba(255, 255, 255, 0.12);
-}
-
-/* Nội dung chính chiếm toàn bộ chiều ngang bên dưới */
-body > main {
-    width: 100%;
-    min-width: 0;
-    min-height: 0;
-    flex: 1 1 auto;
-    overflow-x: hidden;
-    overflow-y: auto;
-}
-
-/* Responsive cho màn hình nhỏ */
-@media (max-width: 900px) {
-    .app-sidebar {
-        flex-wrap: wrap;
-        gap: 8px 16px;
-        padding: 10px 16px;
-    }
-
-    .app-sidebar > div:first-child {
-        flex-wrap: wrap;
-        gap: 8px 14px;
-    }
-
-    .sidebar-logo {
-        width: 90px;
-        height: 44px;
-    }
-
-    .sidebar-title {
-        display: none;
-    }
-
-    .sidebar-nav {
-        flex-wrap: wrap;
-        justify-content: flex-start;
-    }
-
-    .sidebar-nav-link {
-        min-height: 42px;
-        padding: 8px 10px;
-        font-size: 12px;
-    }
-
-    .sidebar-footer {
-        flex-wrap: wrap;
-    }
-
-    .sidebar-status-card {
-        display: none;
-    }
-}
-
-@media (max-width: 520px) {
-    .app-sidebar > div:first-child {
-        flex-direction: column;
-        align-items: stretch;
-    }
-
-    .sidebar-nav {
-        justify-content: flex-start;
-    }
-
-    .sidebar-nav-link {
-        white-space: normal;
-    }
-
-    .sidebar-footer {
-        justify-content: flex-end;
-    }
-
-    .sidebar-logout {
-        padding: 9px 12px;
-        font-size: 12px;
-    }
-}
-
-/* Menu tài khoản trên thanh điều hướng */
-.profile-menu-wrap {
-    position: relative;
-    flex-shrink: 0;
-}
-
-
-/* Khôi phục kiểu tài khoản như giao diện cũ */
-.profile-trigger {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 10px;
-    padding: 0;
-    border: none;
-    border-radius: 0;
-    background: transparent;
-    color: #fff;
-    cursor: pointer;
-    box-shadow: none;
-}
-
-/* Bỏ dấu mũi tên */
-.profile-trigger .fa-chevron-down {
-    display: none;
-}
-
-/* Avatar N2 */
-.profile-avatar {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    width: 44px;
-    height: 44px;
-    border-radius: 50%;
-    background: #2563eb;
-    color: #fff;
-    font-weight: 700;
-}
-
-
-.profile-trigger > span:not(.profile-avatar) {
-    display: block;
-    text-align: right;
-}
-
-.profile-trigger > span:nth-child(1) {
-    font-weight: 700;
-}
-
-.profile-trigger > span:nth-child(2) {
-    font-size: 12px;
-    opacity: 0.8;
-}
-
-
-
-.profile-role {
-    font-size: 12px;
-    opacity: 0.8;
-}
-
-.profile-dropdown {
-    position: absolute;
-    top: calc(100% + 8px);
-    right: 0;
-    z-index: 100;
-    min-width: 150px;
-    padding: 6px;
-    border: 1px solid #e2e8f0;
-    border-radius: 12px;
-    background: #fff;
-    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
-}
-
-.profile-logout {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    padding: 10px 12px;
-    border-radius: 8px;
-    color: #dc2626;
-    text-decoration: none;
-    white-space: nowrap;
-}
-
-.profile-logout:hover {
-    background: #fef2f2;
-}
-
-.profile-menu-wrap {
-    position: relative;
-}
-
-.profile-dropdown {
-    position: absolute;
-    top: calc(100% + 8px);
-    right: 0;
-    z-index: 9999;
-    min-width: 160px;
-    padding: 6px;
-    background: #fff;
-    border: 1px solid #e2e8f0;
-    border-radius: 10px;
-    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
-}
-
-.profile-dropdown.local-hidden {
-    display: none !important;
-}
-
-.profile-dropdown:not(.local-hidden) {
-    display: block !important;
-}
-
-.profile-logout {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    width: 100%;
-    padding: 12px;
-    color: #dc2626;
-    text-decoration: none;
-    white-space: nowrap;
-    box-sizing: border-box;
-}
-
-.profile-logout:hover {
-    background: #fef2f2;
-    border-radius: 6px;
-}
-
-
-/* ===== SỬA MENU TÀI KHOẢN ===== */
-.profile-info {
-    display: flex;
-    flex-direction: column;
-    align-items: flex-end;
-    gap: 3px;
-}
-
-.profile-name {
-    font-size: 14px;
-    font-weight: 700;
-    line-height: 1.4;
-}
-
-.profile-role {
-    display: block;
-    font-size: 12px;
-    font-weight: 400;
-    line-height: 1.4;
-    opacity: 0.8;
-}
-
-.profile-trigger {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 12px;
-    padding: 0;
-    border: none;
-    border-radius: 0;
-    background: transparent;
-    color: #fff;
-    cursor: pointer;
-    box-shadow: none;
-}
-
-.profile-trigger .fa-chevron-down {
-    display: none;
-}
-
-.profile-menu-wrap {
-    position: relative;
-}
-
-.profile-dropdown {
-    position: absolute;
-    top: calc(100% + 10px);
-    right: 0;
-    z-index: 9999;
-    min-width: 170px;
-    padding: 6px;
-    background: #fff;
-    border: 1px solid #e2e8f0;
-    border-radius: 10px;
-    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
-}
-
-.profile-dropdown.local-hidden {
-    display: none !important;
-}
-
-.profile-dropdown:not(.local-hidden) {
-    display: block !important;
-}
-
-.profile-logout {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    width: 100%;
-    box-sizing: border-box;
-    padding: 12px;
-    border-radius: 6px;
-    color: #dc2626;
-    text-decoration: none;
-    white-space: nowrap;
-}
-
-.profile-logout:hover {
-    background: #fef2f2;
-}
-
-
-/* ===== FIX CUỐI: THANH ĐIỀU HƯỚNG NGANG + TÀI KHOẢN LUÔN HIỆN ===== */
 body.local-h-screen {
     display: flex;
     flex-direction: column;
@@ -1399,115 +788,146 @@ body.local-h-screen {
     overflow: hidden;
 }
 
-body.local-h-screen > .app-sidebar {
+.app-sidebar {
+    box-sizing: border-box;
     display: flex;
     flex: 0 0 auto;
     flex-direction: row;
     align-items: center;
     justify-content: space-between;
+    gap: 20px;
     width: 100%;
     min-width: 0;
-    height: auto;
     min-height: 82px;
+    height: auto;
     padding: 10px 28px;
-    gap: 20px;
     overflow: visible;
-    background: linear-gradient(100deg, #416b9f, #245477);
+    position: relative;
+    z-index: 20;
     color: #fff;
+    background: linear-gradient(100deg, #416b9f, #245477);
     border-bottom: 1px solid rgba(255, 255, 255, .2);
 }
 
-body.local-h-screen > .app-sidebar > div:first-child {
+.app-sidebar > div:first-child {
     display: flex;
     flex: 1 1 auto;
     flex-direction: row;
     align-items: center;
-    min-width: 0;
     gap: 24px;
+    min-width: 0;
 }
 
-body.local-h-screen .sidebar-logo {
+.sidebar-logo {
     display: block;
-    flex: 0 0 145px;
-    width: 145px;
-    height: 56px;
+    flex: 0 0 125px;
+    width: 125px;
+    height: 58px;
+    box-sizing: border-box;
     object-fit: contain;
-    padding: 0;
+    object-position: center;
+    padding: 2px;
     margin: 0;
     border: 0;
     border-radius: 0;
 }
 
-body.local-h-screen .sidebar-title {
+.sidebar-title {
     flex: 0 0 auto;
     margin: 0;
     padding: 0;
     color: #fff;
-    font-size: 14px;
+    font-size: 13px;
     font-weight: 500;
+    letter-spacing: .09em;
+    text-transform: uppercase;
     white-space: nowrap;
 }
 
-body.local-h-screen .sidebar-nav {
+.sidebar-nav {
     display: flex;
     flex: 1 1 auto;
     flex-direction: row;
     align-items: center;
     justify-content: center;
-    min-width: 0;
     gap: 6px;
+    min-width: 0;
+    font-size: 14px;
+    font-weight: 500;
 }
 
-body.local-h-screen .sidebar-nav-link {
+.sidebar-nav-link {
+    appearance: none;
+    -webkit-appearance: none;
     display: inline-flex;
     flex: 0 1 auto;
     align-items: center;
     justify-content: center;
+    gap: 9px;
     width: auto;
     min-width: 0;
     min-height: 54px;
     padding: 10px 12px;
+    margin: 0;
     border: 0;
     border-bottom: 3px solid transparent;
     border-radius: 0;
     background: transparent;
-    color: #f1f5f9;
+    color: #e4edf7;
+    text-align: center;
+    font-size: 14px;
+    font-weight: 500;
+    line-height: 1.4;
     white-space: nowrap;
     box-shadow: none;
+    outline: none;
+    transition: background .18s ease, color .18s ease;
 }
 
-body.local-h-screen .sidebar-nav-link.is-active,
-body.local-h-screen .sidebar-nav-link.is-active:hover {
-    background: transparent;
+.sidebar-nav-link i {
+    display: inline-flex;
+    flex: 0 0 auto;
+    align-items: center;
+    justify-content: center;
+    width: 18px;
+    min-width: 18px;
+    color: inherit;
+    font-size: 16px;
+}
+
+.sidebar-nav-link:hover {
+    background: rgba(255, 255, 255, .1);
+    color: #fff;
+}
+
+.sidebar-nav-link.is-active,
+.sidebar-nav-link.is-active:hover {
     border-bottom-color: #fff;
+    background: transparent;
     color: #fff;
     box-shadow: none;
 }
 
-body.local-h-screen .sidebar-nav-link i {
-    color: inherit;
-}
-
-body.local-h-screen > .app-sidebar > .sidebar-footer {
+.sidebar-footer {
     display: flex;
     flex: 0 0 auto;
     flex-direction: row;
     align-items: center;
     justify-content: flex-end;
+    gap: 12px;
     min-width: max-content;
     margin: 0 0 0 auto;
     padding: 0;
-    gap: 0;
     overflow: visible;
 }
 
-body.local-h-screen .profile-menu-wrap {
+.profile-menu-wrap {
     position: relative;
     display: block;
     flex: 0 0 auto;
 }
 
-body.local-h-screen .profile-trigger {
+.profile-trigger {
     display: flex;
     flex-direction: row;
     align-items: center;
@@ -1523,14 +943,14 @@ body.local-h-screen .profile-trigger {
     cursor: pointer;
 }
 
-body.local-h-screen .profile-info {
+.profile-info {
     display: flex;
     flex-direction: column;
     align-items: flex-end;
     gap: 2px;
 }
 
-body.local-h-screen .profile-name {
+.profile-name {
     display: block;
     font-size: 14px;
     font-weight: 700;
@@ -1538,7 +958,7 @@ body.local-h-screen .profile-name {
     white-space: nowrap;
 }
 
-body.local-h-screen .profile-role {
+.profile-role {
     display: block;
     font-size: 12px;
     font-weight: 400;
@@ -1547,7 +967,7 @@ body.local-h-screen .profile-role {
     white-space: nowrap;
 }
 
-body.local-h-screen .profile-avatar {
+.profile-avatar {
     display: inline-flex;
     flex: 0 0 44px;
     align-items: center;
@@ -1560,11 +980,11 @@ body.local-h-screen .profile-avatar {
     font-weight: 700;
 }
 
-body.local-h-screen .profile-trigger .fa-chevron-down {
+.profile-trigger .fa-chevron-down {
     display: none;
 }
 
-body.local-h-screen .profile-dropdown {
+.profile-dropdown {
     position: absolute;
     top: calc(100% + 12px);
     right: 0;
@@ -1577,15 +997,15 @@ body.local-h-screen .profile-dropdown {
     box-shadow: 0 8px 24px rgba(0, 0, 0, .15);
 }
 
-body.local-h-screen .profile-dropdown.local-hidden {
+.profile-dropdown.local-hidden {
     display: none !important;
 }
 
-body.local-h-screen .profile-dropdown:not(.local-hidden) {
+.profile-dropdown:not(.local-hidden) {
     display: block !important;
 }
 
-body.local-h-screen .profile-logout {
+.profile-logout {
     display: flex;
     align-items: center;
     gap: 10px;
@@ -1598,10 +1018,11 @@ body.local-h-screen .profile-logout {
     white-space: nowrap;
 }
 
-body.local-h-screen .profile-logout:hover {
+.profile-logout:hover {
     background: #fef2f2;
 }
 
+/* Nội dung chính nằm dưới thanh điều hướng. */
 body.local-h-screen > main {
     display: flex;
     flex: 1 1 auto;
@@ -1613,44 +1034,50 @@ body.local-h-screen > main {
     overflow-y: auto;
 }
 
+/* Tablet: cho phép menu xuống hàng thay vì chèn lấn. */
 @media (max-width: 1100px) {
-    body.local-h-screen > .app-sidebar {
+    .app-sidebar {
         flex-wrap: wrap;
         gap: 8px 16px;
         padding: 10px 16px;
     }
 
-    body.local-h-screen > .app-sidebar > div:first-child {
+    .app-sidebar > div:first-child {
         flex: 1 1 100%;
         flex-wrap: wrap;
         gap: 10px 16px;
     }
 
-    body.local-h-screen .sidebar-nav {
+    .sidebar-nav {
         flex: 1 1 100%;
         justify-content: flex-start;
         flex-wrap: wrap;
     }
 
-    body.local-h-screen > .app-sidebar > .sidebar-footer {
+    .sidebar-footer {
         margin-left: auto;
     }
 }
 
+/* Điện thoại: giảm khoảng cách để các tab dễ sử dụng. */
 @media (max-width: 600px) {
-    body.local-h-screen .sidebar-logo {
+    .sidebar-logo {
         flex-basis: 100px;
         width: 100px;
         height: 44px;
     }
 
-    body.local-h-screen .sidebar-title {
+    .sidebar-title {
         display: none;
     }
 
-    body.local-h-screen .sidebar-nav-link {
+    .sidebar-nav-link {
         min-height: 42px;
         padding: 8px;
         font-size: 12px;
+    }
+
+    .sidebar-footer {
+        flex-wrap: wrap;
     }
 }
