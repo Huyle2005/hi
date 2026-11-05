@@ -188,6 +188,10 @@ def driver_page():
 def get_dashboard_data():
     if 'user_id' not in session:
         return jsonify({"error": "Unauthorized"}), 401
+    notes.sort(
+        key=lambda note: note["content"].rsplit(" lúc ", 1)[-1],
+        reverse=True
+    )
 
     # Dùng context manager để tự đóng kết nối sau khi đọc dữ liệu.
     with get_db() as conn:
