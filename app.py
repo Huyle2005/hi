@@ -1,6 +1,8 @@
 import os
 import base64
 import re
+import cloudinary
+import cloudinary.api
 from datetime import datetime
 from zoneinfo import ZoneInfo
 from flask import (
@@ -21,6 +23,14 @@ os.makedirs(UPLOADS_DIR, exist_ok=True)
 
 app = Flask(__name__, template_folder=TEMPLATE_DIR)
 app.secret_key = os.environ.get("SECRET_KEY")
+
+# --- CLOUDINARY CONFIGURATION ---
+cloudinary.config(
+    cloud_name=os.environ.get("CLOUDINARY_CLOUD_NAME"),
+    api_key=os.environ.get("CLOUDINARY_API_KEY"),
+    api_secret=os.environ.get("CLOUDINARY_API_SECRET"),
+    secure=True
+)
 
 if not app.secret_key:
     raise RuntimeError("Chưa cấu hình SECRET_KEY trên Render")
@@ -527,6 +537,38 @@ def delete_vehicle(vehicle_id):
     conn.execute("DELETE FROM vehicles WHERE id = %s", (vehicle_id,))
     conn.commit()
     return jsonify({"success": True})
+
+
+# --- API KIỂM TRA KẾT NỐI CLOUDINARY ---
+
+@app.route('/api/cloudinary-check', methods=['GET'])
+def cloudinary_check():
+    if 'user_id' not in session:
+        return jsonify({
+            "success": False,
+            "message": "Chưa đăng nhập"
+        }), 401
+
+    role = (session.get('role') or '').strip().lower()
+    if role not in ['admin', 'quản lý hệ thống']:
+        return jsonify({
+            "success": False,
+            "message": "Không có quyền truy cập"
+        }), 403
+
+    try:
+        result = cloudinary.api.ping()
+        return jsonify({
+            "success": True,
+            "message": "Kết nối Cloudinary thành công",
+            "status": result.get("status")
+        }), 200
+    except Exception:
+        app.logger.exception("Cloudinary connection error")
+        return jsonify({
+            "success": False,
+            "message": "Không thể kết nối Cloudinary. Hãy kiểm tra cấu hình."
+        }), 500
 
 
 # Khởi tạo bảng PostgreSQL khi ứng dụng được nạp
