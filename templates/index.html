@@ -32,6 +32,9 @@
                 <button onclick="switchTab('vehicles')" id="nav-vehicles" class="sidebar-nav-link">
                     <i class="fa-solid fa-truck local-w-5"></i><span>Quản lý Xe</span>
                 </button>
+                <button onclick="switchTab('history')" id="nav-history" class="sidebar-nav-link">
+                    <i class="fa-solid fa-clock-rotate-left local-w-5"></i><span>Lịch sử ra/vào</span>
+                </button>
             </nav>
         </div>
 
@@ -244,6 +247,49 @@
                     </thead>
                     <tbody id="drivers-list" class="local-divide-y"></tbody>
                 </table>
+            </div>
+        </div>
+
+        <!-- VIEW 5: LỊCH SỬ RA/VÀO -->
+        <div id="view-history" class="local-p-6 local-space-y-6 local-hidden">
+            <div class="local-bg-white local-p-5 local-rounded-xl local-border local-border-slate-200 local-shadow-sm local-space-y-4">
+                <div class="local-flex local-flex-wrap local-items-end local-gap-3">
+                    <div>
+                        <label class="local-block local-mb-1 local-text-xs local-font-semibold local-text-slate-500">Từ ngày</label>
+                        <input id="history-from" type="date" class="local-p-2 local-border local-rounded-lg local-text-xs">
+                    </div>
+                    <div>
+                        <label class="local-block local-mb-1 local-text-xs local-font-semibold local-text-slate-500">Đến ngày</label>
+                        <input id="history-to" type="date" class="local-p-2 local-border local-rounded-lg local-text-xs">
+                    </div>
+                    <div>
+                        <label class="local-block local-mb-1 local-text-xs local-font-semibold local-text-slate-500">Cổng</label>
+                        <select id="history-gate" class="local-p-2 local-border local-rounded-lg local-text-xs">
+                            <option value="">Tất cả</option><option value="OUT">Xuất bến</option><option value="IN">Về bãi</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="local-block local-mb-1 local-text-xs local-font-semibold local-text-slate-500">Kết quả</label>
+                        <select id="history-decision" class="local-p-2 local-border local-rounded-lg local-text-xs">
+                            <option value="">Tất cả</option><option value="ALLOW">Cho phép</option><option value="DENY">Từ chối</option>
+                        </select>
+                    </div>
+                    <button type="button" onclick="loadAccessHistory()" class="local-bg-blue-600 local-text-white local-px-4 local-py-2 local-rounded-lg local-text-xs local-font-bold">Lọc lịch sử</button>
+                </div>
+                <div class="local-overflow-x-auto">
+                    <table class="local-w-full local-text-left local-text-xs">
+                        <thead><tr class="local-border-b local-text-slate-400 local-font-semibold">
+                            <th class="local-p-2">THỜI GIAN</th><th class="local-p-2">TÀI XẾ</th>
+                            <th class="local-p-2">BIỂN SỐ</th><th class="local-p-2">CỔNG</th>
+                            <th class="local-p-2">RFID / TX</th><th class="local-p-2">KẾT QUẢ</th>
+                            <th class="local-p-2">ẢNH KHUÔN MẶT</th><th class="local-p-2">ẢNH BIỂN SỐ</th>
+                            <th class="local-p-2">CHI TIẾT</th>
+                        </tr></thead>
+                        <tbody id="access-history-list" class="local-divide-y">
+                            <tr><td colspan="9" class="local-p-4 local-text-center local-text-slate-400">Chưa tải lịch sử.</td></tr>
+                        </tbody>
+                    </table>
+                </div>
             </div>
         </div>
 
