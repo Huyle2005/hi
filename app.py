@@ -187,10 +187,6 @@ def driver_page():
 @app.route('/api/dashboard', methods=['GET'])
 def get_dashboard_data():
     if 'user_id' not in session:
-        notes.sort(
-        key=lambda note: note["content"].rsplit(" lúc ", 1)[-1],
-        reverse=True
-      )
         return jsonify({"error": "Unauthorized"}), 401
     
     # Dùng context manager để tự đóng kết nối sau khi đọc dữ liệu.
@@ -240,7 +236,10 @@ def get_dashboard_data():
                 "title": driver_title,
                 "content": f"Vào bến lúc {arrival}"
             })
-
+    notes.sort(
+        key=lambda note: note["content"].rsplit(" lúc ", 1)[-1],
+        reverse=True
+    )
     return jsonify({
         "drivers": drivers,
         "vehicles": vehicles,
