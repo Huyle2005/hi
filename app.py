@@ -527,41 +527,110 @@ def receive_access_history():
 # --- API TÀI XẾ & FACE DATASET ---
 
 
+
 @app.route('/api/drivers', methods=['POST'])
 def add_driver():
-    data = request.get_json()
-    conn = get_db()
-    cursor = conn.cursor()
+    denied = require_admin()
+    if denied:
+        return denied
+
+    data = request.get_json(silent=True) or {}
+    code = str(data.get('code') or '').strip()
+    name = str(data.get('name') or '').strip()
+    imgs = data.get('face_images')
+
+    if not re.fullmatch(r'[A-Za-z0-9_-]{1,50}', code):
+        return jsonify({
+            "success": False,
+            "message": "Mã tài xế không hợp lệ"
+        }), 400
+
+    if not name or not isinstance(imgs, list) or len(imgs) != 3:
+        return jsonify({
+            "success": False,
+            "message": "Cần tên tài xế và đủ 3 ảnh khuôn mặt"
+        }), 400
+
+    uploaded_ids = []
+
     try:
-        code = data['code']
-        imgs = data.get('face_images', [])
-        saved_paths = []
+        with get_db() as conn:
+            existing = conn.execute(
+                "SELECT id FROM drivers WHERE code = %s",
+                (code,)
+            ).fetchone()
 
-        for idx, img_b64 in enumerate(imgs):
-            if img_b64 and ',' in img_b64:
-                header, encoded = img_b64.split(',', 1)
-                img_data = base64.b64decode(encoded)
-                filename = f"{code}_angle{idx+1}.jpg"
-                filepath = os.path.join(UPLOADS_DIR, filename)
-                with open(filepath, "wb") as f:
-                    f.write(img_data)
-                saved_paths.append(filename)
-            else:
-                saved_paths.append(None)
+        if existing:
+            return jsonify({
+                "success": False,
+                "message": "Mã tài xế đã tồn tại!"
+            }), 400
 
-        while len(saved_paths) < 3:
-            saved_paths.append(None)
+        for idx, image in enumerate(imgs, start=1):
+            if not isinstance(image, str) or not image.startswith(
+                'data:image/jpeg;base64,'
+            ):
+                raise ValueError("Ảnh khuôn mặt không đúng định dạng JPEG")
 
-        cursor.execute(
-            "INSERT INTO drivers (code, name, age, gender, phone, face_img1, face_img2, face_img3) VALUES (%s, %s, %s, %s, %s, %s, %s, %s)",
-            (code, data['name'], data.get('age'), data.get('gender', 'Nam'), data.get(
-                'phone', ''), saved_paths[0], saved_paths[1], saved_paths[2])
-        )
-        conn.commit()
-        return jsonify({"success": True})
-    except UniqueViolation:
-        return jsonify({"success": False, "message": "Mã tài xế đã tồn tại!"}), 400
+            encoded = image.split(',', 1)[1]
+            image_bytes = base64.b64decode(encoded, validate=True)
 
+            if not image_bytes or len(image_bytes) > 8 * 1024 * 1024:
+                raise ValueError("Ảnh không hợp lệ hoặc vượt quá 8 MB")
+
+            result = cloudinary.uploader.upload(
+                image_bytes,
+                folder='iuh-smart-parking/drivers',
+                public_id=f'{code}_angle{idx}_{uuid.uuid4().hex[:10]}',
+                resource_type='image',
+                type='upload'
+            )
+
+            uploaded_ids.append(result['public_id'])
+
+        with get_db() as conn:
+            conn.execute("""
+                INSERT INTO drivers
+                    (code, name, age, gender, phone,
+                     face_img1, face_img2, face_img3)
+                VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
+            """, (
+                code,
+                name,
+                data.get('age'),
+                data.get('gender', 'Nam'),
+                data.get('phone', ''),
+                *uploaded_ids
+            ))
+
+        return jsonify({
+            "success": True,
+            "message": "Đã lưu tài xế và 3 ảnh lên Cloudinary"
+        }), 201
+
+    except (ValueError, base64.binascii.Error) as exc:
+        for public_id in uploaded_ids:
+            try:
+                cloudinary.uploader.destroy(public_id)
+            except Exception:
+                app.logger.exception("Không thể dọn ảnh upload lỗi")
+        return jsonify({
+            "success": False,
+            "message": str(exc)
+        }), 400
+
+    except Exception:
+        for public_id in uploaded_ids:
+            try:
+                cloudinary.uploader.destroy(public_id)
+            except Exception:
+                app.logger.exception("Không thể dọn ảnh upload lỗi")
+
+        app.logger.exception("Lỗi thêm tài xế Cloudinary")
+        return jsonify({
+            "success": False,
+            "message": "Không thể lưu tài xế"
+        }), 500
 
 @app.route('/api/drivers/<int:driver_id>', methods=['DELETE'])
 def delete_driver(driver_id):
@@ -571,23 +640,61 @@ def delete_driver(driver_id):
     return jsonify({"success": True})
 
 
+
 @app.route('/api/face-dataset', methods=['GET'])
 def get_face_dataset():
-    conn = get_db()
-    drivers = conn.execute(
-        "SELECT code, name, face_img1, face_img2, face_img3 FROM drivers WHERE face_img1 IS NOT NULL").fetchall()
+    expected_key = os.environ.get('PI_API_KEY')
+    supplied_key = request.headers.get('X-Device-Key', '')
+
+    if (
+        not expected_key
+        or not supplied_key
+        or not hmac.compare_digest(expected_key, supplied_key)
+    ):
+        return jsonify({
+            "success": False,
+            "message": "Thiết bị chưa được xác thực"
+        }), 401
+
+    with get_db() as conn:
+        drivers = conn.execute("""
+            SELECT code, name, face_img1, face_img2, face_img3
+            FROM drivers
+            ORDER BY code
+        """).fetchall()
+
     dataset = []
-    for d in drivers:
+
+    for driver in drivers:
+        images = []
+
+        for field in ('face_img1', 'face_img2', 'face_img3'):
+            value = driver[field]
+
+            if not value:
+                images.append(None)
+            elif value.startswith('iuh-smart-parking/drivers/'):
+                image_url = cloudinary.utils.cloudinary_url(
+                    value,
+                    resource_type='image',
+                    type='upload',
+                    secure=True
+                )[0]
+                images.append(image_url)
+            else:
+                # Tương thích với đường dẫn ảnh cũ.
+                images.append(f"/face_dataset/{value}")
+
         dataset.append({
-            "code": d["code"],
-            "name": d["name"],
-            "images": [
-                f"/face_dataset/{d['face_img1']}" if d['face_img1'] else None,
-                f"/face_dataset/{d['face_img2']}" if d['face_img2'] else None,
-                f"/face_dataset/{d['face_img3']}" if d['face_img3'] else None
-            ]
+            "code": driver['code'],
+            "name": driver['name'],
+            "images": images
         })
-    return jsonify({"success": True, "dataset": dataset})
+
+    return jsonify({
+        "success": True,
+        "dataset": dataset
+    })
 
 
 @app.route('/face_dataset/<filename>')
