@@ -5,6 +5,7 @@ import cloudinary
 import cloudinary.api
 import cloudinary.uploader
 import uuid
+import hmac
 from datetime import datetime
 from zoneinfo import ZoneInfo
 from flask import (
@@ -319,6 +320,11 @@ def delete_schedule(schedule_id):
 
 @app.route('/api/gate-event', methods=['POST'])
 def handle_gate_event():
+    expected_key = os.environ.get("PI_API_KEY")
+    supplied_key = request.headers.get("X-Device-Key", "")
+    if not expected_key or not supplied_key or not hmac.compare_digest(expected_key, supplied_key):
+        return jsonify({'success': False, 'message': 'Thiết bị chưa được xác thực'}), 401
+
     data = request.get_json(silent=True) or {}
     plate = re.sub(r'[^A-Z0-9]', '', (data.get('plate') or '').upper())
     action = (data.get('action') or '').strip().upper()
@@ -432,7 +438,7 @@ def receive_access_history():
     # API key riêng cho Raspberry Pi; không dùng cookie đăng nhập của trình duyệt.
     expected_key = os.environ.get('PI_API_KEY')
     supplied_key = request.headers.get('X-Device-Key', '')
-    if not expected_key or not supplied_key or not __import__('hmac').compare_digest(expected_key, supplied_key):
+    if not expected_key or not supplied_key or not hmac.compare_digest(expected_key, supplied_key):
         return jsonify({'success': False, 'message': 'Thiết bị chưa được xác thực'}), 401
 
     event_id = (request.form.get('event_id') or '').strip()
