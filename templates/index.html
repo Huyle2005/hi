@@ -282,11 +282,11 @@
                             <th class="local-p-2">THỜI GIAN</th><th class="local-p-2">TÀI XẾ</th>
                             <th class="local-p-2">BIỂN SỐ</th><th class="local-p-2">CỔNG</th>
                             <th class="local-p-2">RFID / TX</th><th class="local-p-2">KẾT QUẢ</th>
-                            <th class="local-p-2">ẢNH KHUÔN MẶT</th><th class="local-p-2">ẢNH BIỂN SỐ</th>
+                            <th class="local-p-2">HÌNH ẢNH</th>
                             <th class="local-p-2">CHI TIẾT</th>
                         </tr></thead>
                         <tbody id="access-history-list" class="local-divide-y">
-                            <tr><td colspan="9" class="local-p-4 local-text-center local-text-slate-400">Chưa tải lịch sử.</td></tr>
+                            <tr><td colspan="8" class="local-p-4 local-text-center local-text-slate-400">Chưa tải lịch sử.</td></tr>
                         </tbody>
                     </table>
                 </div>
@@ -362,6 +362,28 @@
                 <button type="button" id="btn-capture-step" onclick="captureNextAngle()" class="local-bg-blue-600 local-hover-bg-blue-700 local-text-white local-px-5 local-py-2 local-rounded-xl local-text-xs local-font-bold local-flex local-items-center local-space-x-2">
                     <i class="fa-solid fa-camera"></i><span>Chụp Frame 1 (Thẳng)</span>
                 </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Cửa sổ xem đồng thời ảnh khuôn mặt và biển số của một sự kiện -->
+    <div id="history-image-modal" class="history-image-modal" role="dialog" aria-modal="true" aria-labelledby="history-image-title" aria-hidden="true" hidden>
+        <div class="history-image-dialog">
+            <div class="history-image-header">
+                <h3 id="history-image-title">Hình ảnh ra/vào</h3>
+                <button type="button" class="history-image-close" onclick="closeHistoryImages()" aria-label="Đóng cửa sổ ảnh">×</button>
+            </div>
+            <div class="history-image-grid">
+                <div class="history-image-panel">
+                    <h4>Ảnh khuôn mặt</h4>
+                    <img id="history-face-image" alt="Ảnh khuôn mặt tại cổng" hidden>
+                    <p id="history-face-message" class="history-image-message" hidden></p>
+                </div>
+                <div class="history-image-panel">
+                    <h4>Ảnh biển số</h4>
+                    <img id="history-plate-image" alt="Ảnh biển số tại cổng" hidden>
+                    <p id="history-plate-message" class="history-image-message" hidden></p>
+                </div>
             </div>
         </div>
     </div>
