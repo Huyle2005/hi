@@ -4,7 +4,6 @@ import re
 import cloudinary
 import cloudinary.api
 import cloudinary.uploader
-import cloudinary.utils
 import uuid
 import hmac
 from datetime import datetime
@@ -691,49 +690,33 @@ def access_history_image(log_id, kind):
     denied = require_admin()
     if denied:
         return denied
-
     if kind not in ('face', 'plate'):
-        return jsonify({
-            "success": False,
-            "message": "Loai anh khong hop le"
-        }), 400
+        return jsonify({"success": False, "message": "Loại ảnh không hợp lệ"}), 400
 
     column = 'face_image_public_id' if kind == 'face' else 'plate_image_public_id'
-
     try:
         with get_db() as conn:
             row = conn.execute(
                 f"SELECT {column} AS public_id FROM rfid_logs WHERE id = %s",
                 (log_id,)
             ).fetchone()
-
         if not row or not row['public_id']:
-            return jsonify({
-                "success": False,
-                "message": "Khong tim thay anh"
-            }), 404
+            return jsonify({"success": False, "message": "Không tìm thấy ảnh"}), 404
 
+        # URL tải ảnh có chữ ký, chỉ tạo sau khi xác thực phiên admin.
         import time
-
         signed_url = cloudinary.utils.private_download_url(
             row['public_id'],
             "jpg",
-            options={
-                "resource_type": "image",
-                "type": "authenticated",
-                "expires_at": int(time.time()) + 300
-            },
-            attachment=False
+            {"resource_type": "image", "type": "authenticated",
+             "expires_at": int(time.time()) + 300, "attachment": False}
         )
-
         return redirect(signed_url, code=302)
-
     except Exception:
-        app.logger.exception("LOI LAY ANH CLOUDINARY")
-        return jsonify({
-            "success": False,
-            "message": "Khong the truy xuat anh bang chung"
-        }), 500
+        app.logger.exception("Lỗi tạo URL ảnh lịch sử")
+        return jsonify({"success": False, "message": "Không thể truy xuất ảnh bằng chứng"}), 500
+
+
 # --- API KIỂM TRA KẾT NỐI CLOUDINARY ---
 
 @app.route('/api/cloudinary-check', methods=['GET'])
