@@ -634,10 +634,78 @@ def add_driver():
 
 @app.route('/api/drivers/<int:driver_id>', methods=['DELETE'])
 def delete_driver(driver_id):
-    conn = get_db()
-    conn.execute("DELETE FROM drivers WHERE id = %s", (driver_id,))
-    conn.commit()
-    return jsonify({"success": True})
+    denied = require_admin()
+    if denied:
+        return denied
+
+    try:
+        # Xóa dữ liệu Neon trước. Nếu bị ràng buộc tài khoản/lịch trình
+        # ngăn cản, tuyệt đối không xóa ảnh trên Cloudinary.
+        with get_db() as conn:
+            driver = conn.execute("""
+                SELECT code, face_img1, face_img2, face_img3
+                FROM drivers WHERE id = %s FOR UPDATE
+            """, (driver_id,)).fetchone()
+            if not driver:
+                return jsonify({
+                    "success": False, "message": "Không tìm thấy tài xế"
+                }), 404
+
+            conn.execute("DELETE FROM drivers WHERE id = %s", (driver_id,))
+            # Schedules có FK ON DELETE CASCADE trong schema khởi tạo.
+            # rfid_logs và ảnh bằng chứng lịch sử không bị thay đổi.
+
+        failed_images = []
+        deleted_images = 0
+        for field in ('face_img1', 'face_img2', 'face_img3'):
+            public_id = driver.get(field)
+            # Dữ liệu cũ là tên file cục bộ, không được gửi đi xóa nhầm.
+            if not public_id or not public_id.startswith('iuh-smart-parking/drivers/'):
+                continue
+            try:
+                result = cloudinary.uploader.destroy(
+                    public_id, resource_type='image', type='upload',
+                    invalidate=True
+                )
+                if result.get('result') in ('ok', 'not found'):
+                    deleted_images += 1
+                else:
+                    failed_images.append(field)
+                    app.logger.warning(
+                        "Cloudinary không xóa được ảnh %s của tài xế %s: %s",
+                        field, driver_id, result.get('result')
+                    )
+            except Exception:
+                failed_images.append(field)
+                app.logger.exception(
+                    "Lỗi xóa ảnh %s của tài xế %s trên Cloudinary",
+                    field, driver_id
+                )
+
+        if failed_images:
+            return jsonify({
+                "success": True,
+                "message": "Đã xóa tài xế khỏi Neon nhưng một số ảnh Cloudinary chưa xóa được. Kiểm tra Render Logs để dọn ảnh còn lại.",
+                "deleted_images": deleted_images,
+                "failed_image_fields": failed_images
+            }), 200
+
+        return jsonify({
+            "success": True,
+            "message": "Đã xóa tài xế và ảnh khuôn mặt trên Cloudinary",
+            "deleted_images": deleted_images
+        }), 200
+
+    except psycopg.errors.ForeignKeyViolation:
+        return jsonify({
+            "success": False,
+            "message": "Không thể xóa tài xế vì còn dữ liệu liên kết (ví dụ tài khoản đăng nhập). Hãy xử lý liên kết trước."
+        }), 409
+    except Exception:
+        app.logger.exception("Lỗi xóa tài xế %s", driver_id)
+        return jsonify({
+            "success": False, "message": "Không thể xóa tài xế"
+        }), 500
 
 
 
