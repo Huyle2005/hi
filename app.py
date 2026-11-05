@@ -330,7 +330,7 @@ def handle_gate_event():
     action = (data.get('action') or '').strip().upper()
     driver_code = (data.get('driver_code') or '').strip()
     rfid_uid = data.get('rfid_uid') or data.get('uid') or 'UNKNOWN'
-    tx = data.get('tx')
+    tx = (data.get('tx') or '').strip() or 'UNKNOWN'
     event_id = (data.get('event_id') or uuid.uuid4().hex).strip()
 
     now_time = datetime.now(
