@@ -1,30 +1,25 @@
 <!DOCTYPE html>
 <html lang="vi">
-
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Trung tâm vận hành - IUH Smart Parking</title>
-
+    
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
 </head>
-
 <body class="local-bg-slate-100 local-text-slate-800 local-font-sans local-h-screen local-flex local-overflow-hidden">
 
     <aside class="app-sidebar">
-        <button type="button" id="mobile-menu-toggle" class="mobile-menu-toggle" aria-label="Mở menu"
-            aria-controls="primary-navigation" aria-expanded="false">
-
-            <i class="fa-solid fa-bars"></i>
-        </button>
         <div>
-            <img src="{{ url_for('static', filename='images/logo.png') }}" alt="Logo IUH" class="sidebar-logo">
+            <img src="{{ url_for('static', filename='images/logo.png') }}"
+             alt="Logo IUH"
+             class="sidebar-logo">
 
 
             <div class="sidebar-title">Trung tâm vận hành</div>
 
-            <nav class="sidebar-nav" id="primary-navigation">
+            <nav class="sidebar-nav">
                 <button onclick="switchTab('overview')" id="nav-overview" class="sidebar-nav-link is-active">
                     <i class="fa-solid fa-gauge-high local-w-5"></i><span>Tổng quan</span>
                 </button>
@@ -66,62 +61,49 @@
 
     <!-- MAIN CONTENT -->
     <main class="local-flex-1 local-flex local-flex-col local-overflow-y-auto">
-        <header
-            class="local-bg-white local-border-b local-px-6 local-py-3 local-flex local-items-center local-justify-between local-sticky local-top-0 local-z-10 local-shadow-sm">
+        <header class="local-bg-white local-border-b local-px-6 local-py-3 local-flex local-items-center local-justify-between local-sticky local-top-0 local-z-10 local-shadow-sm">
             <h1 id="page-title" class="local-text-xl local-font-bold local-text-slate-800">Tổng quan hệ thống</h1>
         </header>
 
         <!-- VIEW 1: TỔNG QUAN -->
         <div id="view-overview" class="local-p-6 local-space-y-6">
             <div class="local-grid local-grid-cols-3 local-gap-6">
-                <div
-                    class="local-bg-white local-p-4 local-rounded-xl local-border local-border-slate-200 local-shadow-sm local-flex local-items-center local-justify-between">
+                <div class="local-bg-white local-p-4 local-rounded-xl local-border local-border-slate-200 local-shadow-sm local-flex local-items-center local-justify-between">
                     <div>
                         <div class="local-text-xs local-text-slate-500 local-font-medium">TỔNG PHƯƠNG TIỆN</div>
                         <div id="kpi-vehicles" class="local-text-2xl local-font-bold local-text-slate-800">0</div>
                     </div>
-                    <div
-                        class="local-w-10 local-h-10 local-bg-blue-100 local-text-blue-600 local-rounded-xl local-flex local-items-center local-justify-center local-font-bold">
-                        <i class="fa-solid fa-truck"></i>
-                    </div>
+                    <div class="local-w-10 local-h-10 local-bg-blue-100 local-text-blue-600 local-rounded-xl local-flex local-items-center local-justify-center local-font-bold"><i class="fa-solid fa-truck"></i></div>
                 </div>
 
-                <div
-                    class="local-bg-white local-p-4 local-rounded-xl local-border local-border-slate-200 local-shadow-sm local-flex local-items-center local-justify-between">
+                <div class="local-bg-white local-p-4 local-rounded-xl local-border local-border-slate-200 local-shadow-sm local-flex local-items-center local-justify-between">
                     <div>
                         <div class="local-text-xs local-text-slate-500 local-font-medium">LỊCH TRÌNH ĐANG CHẠY</div>
                         <div id="kpi-schedules" class="local-text-2xl local-font-bold local-text-emerald-600">0</div>
                     </div>
-                    <div
-                        class="local-w-10 local-h-10 local-bg-emerald-100 local-text-emerald-600 local-rounded-xl local-flex local-items-center local-justify-center local-font-bold">
-                        <i class="fa-solid fa-route"></i>
-                    </div>
+                    <div class="local-w-10 local-h-10 local-bg-emerald-100 local-text-emerald-600 local-rounded-xl local-flex local-items-center local-justify-center local-font-bold"><i class="fa-solid fa-route"></i></div>
                 </div>
 
-                <div
-                    class="local-bg-white local-p-4 local-rounded-xl local-border local-border-slate-200 local-shadow-sm local-flex local-items-center local-justify-between">
+                <div class="local-bg-white local-p-4 local-rounded-xl local-border local-border-slate-200 local-shadow-sm local-flex local-items-center local-justify-between">
                     <div>
                         <div class="local-text-xs local-text-slate-500 local-font-medium">SỰ CỐ CẦN XỬ LÝ</div>
                         <div id="kpi-incidents" class="local-text-2xl local-font-bold local-text-amber-600">0</div>
                     </div>
-                    <div
-                        class="local-w-10 local-h-10 local-bg-amber-100 local-text-amber-600 local-rounded-xl local-flex local-items-center local-justify-center local-font-bold">
-                        <i class="fa-solid fa-triangle-exclamation"></i>
-                    </div>
+                    <div class="local-w-10 local-h-10 local-bg-amber-100 local-text-amber-600 local-rounded-xl local-flex local-items-center local-justify-center local-font-bold"><i class="fa-solid fa-triangle-exclamation"></i></div>
                 </div>
             </div>
 
             <div class="local-grid local-grid-cols-3 local-gap-6">
-                <div
-                    class="local-col-span-2 local-bg-white local-p-5 local-rounded-xl local-border local-border-slate-200 local-shadow-sm local-space-y-4">
+                <div class="local-col-span-2 local-bg-white local-p-5 local-rounded-xl local-border local-border-slate-200 local-shadow-sm local-space-y-4">
                     <div class="local-flex local-justify-between local-items-center">
-                        <h2 class="local-font-bold local-text-slate-800 local-text-base">Lịch trình sơ bộ xe xuất bến /
-                            về bãi</h2>
-
-                        <button onclick="switchTab('schedules')"
-                            class="local-text-xs local-text-blue-600 local-font-semibold local-hover-underline"
-                            class="btn-link"> Xem chi tiết &gt;</button>
-                    </div>
+                        <h2 class="local-font-bold local-text-slate-800 local-text-base">Lịch trình sơ bộ xe xuất bến / về bãi</h2>
+                        
+                    <button
+                        onclick="switchTab('schedules')"
+                        class="local-text-xs local-text-blue-600 local-font-semibold local-hover-underline"
+                        class="btn-link"
+                    > Xem chi tiết &gt;</button>
+            </div>
 
                     <div class="local-overflow-x-auto">
                         <table class="local-w-full local-text-left local-text-xs">
@@ -140,8 +122,7 @@
                 </div>
 
                 <!-- GHI CHÚ TRỄ GIỜ -->
-                <div
-                    class="local-bg-white local-p-5 local-rounded-xl local-border local-border-slate-200 local-shadow-sm local-space-y-4">
+                <div class="local-bg-white local-p-5 local-rounded-xl local-border local-border-slate-200 local-shadow-sm local-space-y-4">
                     <div class="local-flex local-justify-between local-items-center">
                         <h2 class="local-font-bold local-text-slate-800 local-text-base">Ghi chú ra vào</h2>
                         <i class="fa-solid fa-bell local-text-amber-500 local-text-xs"></i>
@@ -154,8 +135,7 @@
         <!-- VIEW 2: QUẢN LÝ LỊCH TRÌNH -->
         <div id="view-schedules" class="local-p-6 local-space-y-6 local-hidden">
             <!-- FORM ĐĂNG KÝ KẾ HOẠCH (GỌN GÀNG, ĐÚNG THỰC TẾ) -->
-            <div
-                class="local-bg-white local-p-5 local-rounded-xl local-border local-border-slate-200 local-shadow-sm local-space-y-4">
+            <div class="local-bg-white local-p-5 local-rounded-xl local-border local-border-slate-200 local-shadow-sm local-space-y-4">
                 <h2 class="local-font-bold local-text-slate-800 local-text-base">Tạo Lịch Trình Xe Mới</h2>
                 <form id="add-schedule-form" class="local-grid local-grid-cols-5 local-gap-4 local-text-xs">
                     <div>
@@ -163,8 +143,8 @@
                             Tài xế
                         </label>
                         <select id="schedule-driver-id"
-                            class="local-w-full local-p-2 local-border local-rounded-lg local-outline-none"
-                            required></select>
+                                class="local-w-full local-p-2 local-border local-rounded-lg local-outline-none"
+                                required></select>
                     </div>
 
                     <div>
@@ -172,29 +152,32 @@
                             Biển số xe
                         </label>
                         <select id="schedule-vehicle-id"
-                            class="local-w-full local-p-2 local-border local-rounded-lg local-outline-none"
-                            required></select>
+                                class="local-w-full local-p-2 local-border local-rounded-lg local-outline-none"
+                                required></select>
                     </div>
 
                     <div>
                         <label class="local-block local-mb-1 local-text-slate-500 local-font-semibold">
                             Ngày và giờ xuất bến
                         </label>
-                        <input type="datetime-local" id="schedule-dep-time"
-                            class="local-w-full local-p-2 local-border local-rounded-lg local-outline-none" required>
+                        <input type="datetime-local"
+                            id="schedule-dep-time"
+                            class="local-w-full local-p-2 local-border local-rounded-lg local-outline-none"
+                            required>
                     </div>
 
                     <div>
                         <label class="local-block local-mb-1 local-text-slate-500 local-font-semibold">
                             Ngày và giờ về bãi
                         </label>
-                        <input type="datetime-local" id="schedule-ret-time"
+                        <input type="datetime-local"
+                            id="schedule-ret-time"
                             class="local-w-full local-p-2 local-border local-rounded-lg local-outline-none">
                     </div>
 
                     <div class="local-flex local-items-end">
                         <button type="submit"
-                            class="local-w-full local-bg-blue-600 local-text-white local-p-2 local-rounded-lg local-font-bold local-hover-bg-blue-700 local-transition">
+                                class="local-w-full local-bg-blue-600 local-text-white local-p-2 local-rounded-lg local-font-bold local-hover-bg-blue-700 local-transition">
                             Tạo Lịch Trình
                         </button>
                     </div>
@@ -202,8 +185,7 @@
             </div>
 
             <div class="local-bg-white local-p-5 local-rounded-xl local-border local-border-slate-200 local-shadow-sm">
-                <h2 class="local-font-bold local-text-slate-800 local-text-base local-mb-4">Danh Sách Lịch Trình Chi
-                    Tiết</h2>
+                <h2 class="local-font-bold local-text-slate-800 local-text-base local-mb-4">Danh Sách Lịch Trình Chi Tiết</h2>
                 <table class="local-w-full local-text-left local-text-xs">
                     <thead>
                         <tr class="local-border-b local-text-slate-400 local-font-semibold local-uppercase">
@@ -224,47 +206,35 @@
 
         <!-- VIEW 3: QUẢN LÝ TÀI XẾ -->
         <div id="view-drivers" class="local-p-6 local-space-y-6 local-hidden">
-            <div
-                class="local-bg-white local-p-5 local-rounded-xl local-border local-border-slate-200 local-shadow-sm local-space-y-4">
+            <div class="local-bg-white local-p-5 local-rounded-xl local-border local-border-slate-200 local-shadow-sm local-space-y-4">
                 <div class="local-flex local-justify-between local-items-center">
-                    <h2 class="local-font-bold local-text-slate-800 local-text-base">Đăng Ký Tài Xế & Quét Khuôn Mặt AI
-                    </h2>
-                    <button type="button" onclick="openCameraModal()"
-                        class="local-bg-emerald-600 local-hover-bg-emerald-700 local-text-white local-px-4 local-py-2 local-rounded-lg local-font-bold local-text-xs local-flex local-items-center local-space-x-2">
+                    <h2 class="local-font-bold local-text-slate-800 local-text-base">Đăng Ký Tài Xế & Quét Khuôn Mặt AI</h2>
+                    <button type="button" onclick="openCameraModal()" class="local-bg-emerald-600 local-hover-bg-emerald-700 local-text-white local-px-4 local-py-2 local-rounded-lg local-font-bold local-text-xs local-flex local-items-center local-space-x-2">
                         <i class="fa-solid fa-camera"></i><span>Mở Webcam Quét Face 3 Góc</span>
                     </button>
                 </div>
 
                 <form id="add-driver-form" class="local-grid local-grid-cols-4 local-gap-4 local-text-xs">
-                    <input type="text" id="driver-code" placeholder="Mã TX (vd: TX003)"
-                        class="local-p-2 local-border local-rounded-lg local-outline-none" required>
-                    <input type="text" id="driver-name" placeholder="Họ và Tên"
-                        class="local-p-2 local-border local-rounded-lg local-outline-none" required>
-                    <input type="number" id="driver-age" placeholder="Tuổi"
-                        class="local-p-2 local-border local-rounded-lg local-outline-none" min="18" max="60" step="1"
-                        required>
+                    <input type="text" id="driver-code" placeholder="Mã TX (vd: TX003)" class="local-p-2 local-border local-rounded-lg local-outline-none" required>
+                    <input type="text" id="driver-name" placeholder="Họ và Tên" class="local-p-2 local-border local-rounded-lg local-outline-none" required>
+                    <input type="number" id="driver-age" placeholder="Tuổi" class="local-p-2 local-border local-rounded-lg local-outline-none" min="18" max="60" step="1" required>
                     <select id="driver-gender" class="local-p-2 local-border local-rounded-lg local-outline-none">
                         <option value="Nam">Nam</option>
                         <option value="Nữ">Nữ</option>
                     </select>
 
-                    <div
-                        class="local-col-span-4 local-flex local-items-center local-space-x-4 local-border-t local-pt-3">
+                    <div class="local-col-span-4 local-flex local-items-center local-space-x-4 local-border-t local-pt-3">
                         <span class="local-text-xs local-font-semibold local-text-slate-600">Trạng thái ảnh mặt:</span>
-                        <div id="face-status-badge"
-                            class="local-text-xs local-bg-amber-100 local-text-amber-800 local-px-3 local-py-1 local-rounded-full local-font-bold">
+                        <div id="face-status-badge" class="local-text-xs local-bg-amber-100 local-text-amber-800 local-px-3 local-py-1 local-rounded-full local-font-bold">
                             Chưa quét khuôn mặt (Cần quét 3 góc)
                         </div>
-                        <button type="submit"
-                            class="local-ml-auto local-bg-blue-600 local-text-white local-px-6 local-py-2 local-rounded-lg local-font-bold local-hover-bg-blue-700">Lưu
-                            Tài Xế</button>
+                        <button type="submit" class="local-ml-auto local-bg-blue-600 local-text-white local-px-6 local-py-2 local-rounded-lg local-font-bold local-hover-bg-blue-700">Lưu Tài Xế</button>
                     </div>
                 </form>
             </div>
 
             <div class="local-bg-white local-p-5 local-rounded-xl local-border local-border-slate-200 local-shadow-sm">
-                <h2 class="local-font-bold local-text-slate-800 local-text-base local-mb-4">Danh sách Tài xế & Trạng
-                    thái Face Dataset</h2>
+                <h2 class="local-font-bold local-text-slate-800 local-text-base local-mb-4">Danh sách Tài xế & Trạng thái Face Dataset</h2>
                 <table class="local-w-full local-text-left local-text-xs">
                     <thead>
                         <tr class="local-border-b local-text-slate-400 local-font-semibold">
@@ -282,62 +252,41 @@
 
         <!-- VIEW 5: LỊCH SỬ RA/VÀO -->
         <div id="view-history" class="local-p-6 local-space-y-6 local-hidden">
-            <div
-                class="local-bg-white local-p-5 local-rounded-xl local-border local-border-slate-200 local-shadow-sm local-space-y-4">
+            <div class="local-bg-white local-p-5 local-rounded-xl local-border local-border-slate-200 local-shadow-sm local-space-y-4">
                 <div class="local-flex local-flex-wrap local-items-end local-gap-3">
                     <div>
-                        <label class="local-block local-mb-1 local-text-xs local-font-semibold local-text-slate-500">Từ
-                            ngày</label>
-                        <input id="history-from" type="date"
-                            class="local-p-2 local-border local-rounded-lg local-text-xs">
+                        <label class="local-block local-mb-1 local-text-xs local-font-semibold local-text-slate-500">Từ ngày</label>
+                        <input id="history-from" type="date" class="local-p-2 local-border local-rounded-lg local-text-xs">
                     </div>
                     <div>
-                        <label class="local-block local-mb-1 local-text-xs local-font-semibold local-text-slate-500">Đến
-                            ngày</label>
-                        <input id="history-to" type="date"
-                            class="local-p-2 local-border local-rounded-lg local-text-xs">
+                        <label class="local-block local-mb-1 local-text-xs local-font-semibold local-text-slate-500">Đến ngày</label>
+                        <input id="history-to" type="date" class="local-p-2 local-border local-rounded-lg local-text-xs">
                     </div>
                     <div>
-                        <label
-                            class="local-block local-mb-1 local-text-xs local-font-semibold local-text-slate-500">Cổng</label>
+                        <label class="local-block local-mb-1 local-text-xs local-font-semibold local-text-slate-500">Cổng</label>
                         <select id="history-gate" class="local-p-2 local-border local-rounded-lg local-text-xs">
-                            <option value="">Tất cả</option>
-                            <option value="OUT">Xuất bến</option>
-                            <option value="IN">Về bãi</option>
+                            <option value="">Tất cả</option><option value="OUT">Xuất bến</option><option value="IN">Về bãi</option>
                         </select>
                     </div>
                     <div>
-                        <label class="local-block local-mb-1 local-text-xs local-font-semibold local-text-slate-500">Kết
-                            quả</label>
+                        <label class="local-block local-mb-1 local-text-xs local-font-semibold local-text-slate-500">Kết quả</label>
                         <select id="history-decision" class="local-p-2 local-border local-rounded-lg local-text-xs">
-                            <option value="">Tất cả</option>
-                            <option value="ALLOW">Cho phép</option>
-                            <option value="DENY">Từ chối</option>
+                            <option value="">Tất cả</option><option value="ALLOW">Cho phép</option><option value="DENY">Từ chối</option>
                         </select>
                     </div>
-                    <button type="button" onclick="loadAccessHistory()"
-                        class="local-bg-blue-600 local-text-white local-px-4 local-py-2 local-rounded-lg local-text-xs local-font-bold">Lọc
-                        lịch sử</button>
+                    <button type="button" onclick="loadAccessHistory()" class="local-bg-blue-600 local-text-white local-px-4 local-py-2 local-rounded-lg local-text-xs local-font-bold">Lọc lịch sử</button>
                 </div>
                 <div class="local-overflow-x-auto">
                     <table class="local-w-full local-text-left local-text-xs">
-                        <thead>
-                            <tr class="local-border-b local-text-slate-400 local-font-semibold">
-                                <th class="local-p-2">THỜI GIAN</th>
-                                <th class="local-p-2">TÀI XẾ</th>
-                                <th class="local-p-2">BIỂN SỐ</th>
-                                <th class="local-p-2">CỔNG</th>
-                                <th class="local-p-2">RFID / TX</th>
-                                <th class="local-p-2">KẾT QUẢ</th>
-                                <th class="local-p-2">HÌNH ẢNH</th>
-                                <th class="local-p-2">CHI TIẾT</th>
-                            </tr>
-                        </thead>
+                        <thead><tr class="local-border-b local-text-slate-400 local-font-semibold">
+                            <th class="local-p-2">THỜI GIAN</th><th class="local-p-2">TÀI XẾ</th>
+                            <th class="local-p-2">BIỂN SỐ</th><th class="local-p-2">CỔNG</th>
+                            <th class="local-p-2">RFID / TX</th><th class="local-p-2">KẾT QUẢ</th>
+                            <th class="local-p-2">HÌNH ẢNH</th>
+                            <th class="local-p-2">CHI TIẾT</th>
+                        </tr></thead>
                         <tbody id="access-history-list" class="local-divide-y">
-                            <tr>
-                                <td colspan="8" class="local-p-4 local-text-center local-text-slate-400">Chưa tải lịch
-                                    sử.</td>
-                            </tr>
+                            <tr><td colspan="8" class="local-p-4 local-text-center local-text-slate-400">Chưa tải lịch sử.</td></tr>
                         </tbody>
                     </table>
                 </div>
@@ -346,20 +295,16 @@
 
         <!-- VIEW 4: QUẢN LÝ XE -->
         <div id="view-vehicles" class="local-p-6 local-space-y-6 local-hidden">
-            <div
-                class="local-bg-white local-p-5 local-rounded-xl local-border local-border-slate-200 local-shadow-sm local-space-y-4">
+            <div class="local-bg-white local-p-5 local-rounded-xl local-border local-border-slate-200 local-shadow-sm local-space-y-4">
                 <h2 class="local-font-bold local-text-slate-800 local-text-base">Thêm Phương Tiện Mới</h2>
                 <form id="add-vehicle-form" class="local-grid local-grid-cols-3 local-gap-4 local-text-xs">
-                    <input type="text" id="vehicle-plate" placeholder="Biển số (vd: 59C-999.99)"
-                        class="local-p-2 local-border local-rounded-lg local-outline-none" required>
+                    <input type="text" id="vehicle-plate" placeholder="Biển số (vd: 59C-999.99)" class="local-p-2 local-border local-rounded-lg local-outline-none" required>
                     <select id="vehicle-type" class="local-p-2 local-border local-rounded-lg local-outline-none">
                         <option value="Xe 16 chỗ">Xe 16 chỗ</option>
                         <option value="Xe tải">Xe tải</option>
                         <option value="Xe khác">Xe khác</option>
                     </select>
-                    <button type="submit"
-                        class="local-bg-blue-600 local-text-white local-rounded-lg local-font-bold local-hover-bg-blue-700 local-transition">Thêm
-                        Xe</button>
+                    <button type="submit" class="local-bg-blue-600 local-text-white local-rounded-lg local-font-bold local-hover-bg-blue-700 local-transition">Thêm Xe</button>
                 </form>
             </div>
 
@@ -380,54 +325,41 @@
     </main>
 
     <!-- MODAL POPUP CAMERA -->
-    <div id="camera-modal"
-        class="local-fixed local-inset-0 local-bg-slate-900-80 local-backdrop-blur-sm local-z-50 local-flex local-items-center local-justify-center local-hidden">
-        <div
-            class="local-bg-white local-w-full local-max-w-xl local-p-6 local-rounded-2xl local-shadow-2xl local-space-y-4 local-relative">
+    <div id="camera-modal" class="local-fixed local-inset-0 local-bg-slate-900-80 local-backdrop-blur-sm local-z-50 local-flex local-items-center local-justify-center local-hidden">
+        <div class="local-bg-white local-w-full local-max-w-xl local-p-6 local-rounded-2xl local-shadow-2xl local-space-y-4 local-relative">
             <div class="local-flex local-justify-between local-items-center local-border-b local-pb-3">
-                <h3
-                    class="local-font-bold local-text-slate-800 local-text-sm local-flex local-items-center local-space-x-2">
+                <h3 class="local-font-bold local-text-slate-800 local-text-sm local-flex local-items-center local-space-x-2">
                     <i class="fa-solid fa-camera-retro local-text-blue-600"></i>
                     <span>Chụp Khựng Frame 3 Góc Khuôn Mặt Tài Xế</span>
                 </h3>
-                <button onclick="closeCameraModal()" class="local-text-slate-400 local-hover-text-slate-600"><i
-                        class="fa-solid fa-xmark local-text-lg"></i></button>
+                <button onclick="closeCameraModal()" class="local-text-slate-400 local-hover-text-slate-600"><i class="fa-solid fa-xmark local-text-lg"></i></button>
             </div>
 
-            <div class="local-relative local-bg-black local-rounded-xl local-overflow-hidden local-aspect-video local-flex local-items-center local-justify-center"
-                id="cam-box">
+            <div class="local-relative local-bg-black local-rounded-xl local-overflow-hidden local-aspect-video local-flex local-items-center local-justify-center" id="cam-box">
                 <video id="webcam" autoplay playsinline class="local-w-full local-h-full local-object-cover"></video>
-                <div id="cam-overlay"
-                    class="local-absolute local-inset-0 local-border-2 local-border-dashed local-border-emerald-400-70 local-rounded-xl local-pointer-events-none local-flex local-items-center local-justify-center">
-                    <span id="guide-text"
-                        class="local-bg-black-60 local-text-white local-text-xs local-px-4 local-py-1-5 local-rounded-full local-font-bold">1.
-                        Nhìn THẲNG vào camera</span>
+                <div id="cam-overlay" class="local-absolute local-inset-0 local-border-2 local-border-dashed local-border-emerald-400-70 local-rounded-xl local-pointer-events-none local-flex local-items-center local-justify-center">
+                    <span id="guide-text" class="local-bg-black-60 local-text-white local-text-xs local-px-4 local-py-1-5 local-rounded-full local-font-bold">1. Nhìn THẲNG vào camera</span>
                 </div>
             </div>
 
             <div class="local-grid local-grid-cols-3 local-gap-3 local-text-center local-text-xs">
                 <div class="local-border local-p-2 local-rounded-xl local-bg-slate-50">
                     <span class="local-font-semibold local-block local-mb-1">Góc 1: Nhìn Thẳng</span>
-                    <img id="prev-1"
-                        class="local-w-full local-h-20 local-object-cover local-rounded local-bg-slate-200 local-border">
+                    <img id="prev-1" class="local-w-full local-h-20 local-object-cover local-rounded local-bg-slate-200 local-border">
                 </div>
                 <div class="local-border local-p-2 local-rounded-xl local-bg-slate-50">
                     <span class="local-font-semibold local-block local-mb-1">Góc 2: Nghiêng Trái</span>
-                    <img id="prev-2"
-                        class="local-w-full local-h-20 local-object-cover local-rounded local-bg-slate-200 local-border">
+                    <img id="prev-2" class="local-w-full local-h-20 local-object-cover local-rounded local-bg-slate-200 local-border">
                 </div>
                 <div class="local-border local-p-2 local-rounded-xl local-bg-slate-50">
                     <span class="local-font-semibold local-block local-mb-1">Góc 3: Nghiêng Phải</span>
-                    <img id="prev-3"
-                        class="local-w-full local-h-20 local-object-cover local-rounded local-bg-slate-200 local-border">
+                    <img id="prev-3" class="local-w-full local-h-20 local-object-cover local-rounded local-bg-slate-200 local-border">
                 </div>
             </div>
 
             <div class="local-flex local-justify-between local-items-center local-border-t local-pt-3">
-                <button type="button" onclick="resetCapture()"
-                    class="local-text-xs local-text-slate-500 local-hover-underline">Chụp lại từ đầu</button>
-                <button type="button" id="btn-capture-step" onclick="captureNextAngle()"
-                    class="local-bg-blue-600 local-hover-bg-blue-700 local-text-white local-px-5 local-py-2 local-rounded-xl local-text-xs local-font-bold local-flex local-items-center local-space-x-2">
+                <button type="button" onclick="resetCapture()" class="local-text-xs local-text-slate-500 local-hover-underline">Chụp lại từ đầu</button>
+                <button type="button" id="btn-capture-step" onclick="captureNextAngle()" class="local-bg-blue-600 local-hover-bg-blue-700 local-text-white local-px-5 local-py-2 local-rounded-xl local-text-xs local-font-bold local-flex local-items-center local-space-x-2">
                     <i class="fa-solid fa-camera"></i><span>Chụp Frame 1 (Thẳng)</span>
                 </button>
             </div>
@@ -435,13 +367,11 @@
     </div>
 
     <!-- Cửa sổ xem đồng thời ảnh khuôn mặt và biển số của một sự kiện -->
-    <div id="history-image-modal" class="history-image-modal" role="dialog" aria-modal="true"
-        aria-labelledby="history-image-title" aria-hidden="true" hidden>
+    <div id="history-image-modal" class="history-image-modal" role="dialog" aria-modal="true" aria-labelledby="history-image-title" aria-hidden="true" hidden>
         <div class="history-image-dialog">
             <div class="history-image-header">
                 <h3 id="history-image-title">Hình ảnh ra/vào</h3>
-                <button type="button" class="history-image-close" onclick="closeHistoryImages()"
-                    aria-label="Đóng cửa sổ ảnh">×</button>
+                <button type="button" class="history-image-close" onclick="closeHistoryImages()" aria-label="Đóng cửa sổ ảnh">×</button>
             </div>
             <div class="history-image-grid">
                 <div class="history-image-panel">
@@ -459,45 +389,5 @@
     </div>
 
     <script src="{{ url_for('static', filename='js/app.js') }}"></script>
-    <script>
-        document.addEventListener("DOMContentLoaded", function () {
-            const menuBtn = document.getElementById("mobile-menu-toggle");
-            const sidebar = document.querySelector(".app-sidebar");
-            const nav = document.getElementById("primary-navigation");
-
-            if (!menuBtn || !sidebar || !nav) return;
-
-            function closeMenu() {
-                sidebar.classList.remove("mobile-menu-open");
-                menuBtn.setAttribute("aria-expanded", "false");
-                menuBtn.querySelector("i").className = "fa-solid fa-bars";
-            }
-
-            menuBtn.addEventListener("click", function () {
-                const isOpen = sidebar.classList.toggle("mobile-menu-open");
-
-                menuBtn.setAttribute("aria-expanded", String(isOpen));
-                menuBtn.querySelector("i").className =
-                    isOpen ? "fa-solid fa-xmark" : "fa-solid fa-bars";
-            });
-
-            nav.querySelectorAll(".sidebar-nav-link").forEach(button => {
-                button.addEventListener("click", closeMenu);
-            });
-
-            document.addEventListener("click", function (event) {
-                if (!sidebar.contains(event.target)) closeMenu();
-            });
-
-            document.addEventListener("keydown", function (event) {
-                if (event.key === "Escape") closeMenu();
-            });
-
-            window.addEventListener("resize", function () {
-                if (window.innerWidth > 767) closeMenu();
-            });
-        });
-    </script>
 </body>
-
 </html>
