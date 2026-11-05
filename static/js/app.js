@@ -232,10 +232,13 @@ async function loadData() {
     }
 }
 
+let historyImageRecords = new Map();
+
 async function loadAccessHistory() {
     const tbody = $('access-history-list');
     if (!tbody) return;
-    tbody.innerHTML = '<tr><td colspan="9" class="local-p-4 local-text-center">Đang tải lịch sử...</td></tr>';
+    historyImageRecords.clear();
+    tbody.innerHTML = '<tr><td colspan="8" class="local-p-4 local-text-center">Đang tải lịch sử...</td></tr>';
     const params = new URLSearchParams({limit: '100'});
     const from = $('history-from')?.value || '';
     const to = $('history-to')?.value || '';
@@ -248,18 +251,15 @@ async function loadAccessHistory() {
     try {
         const data = await requestJson('/api/access-history?' + params.toString());
         if (!data.items?.length) {
-            tbody.innerHTML = '<tr><td colspan="9" class="local-p-4 local-text-center local-text-slate-400">Chưa có dữ liệu phù hợp.</td></tr>';
+            tbody.innerHTML = '<tr><td colspan="8" class="local-p-4 local-text-center local-text-slate-400">Chưa có dữ liệu phù hợp.</td></tr>';
             return;
         }
         tbody.innerHTML = data.items.map((item) => {
             const allowed = item.decision === 'ALLOW' || item.status === 'SUCCESS';
             const gateLabel = item.event_type === 'OUT' ? 'Xuất bến' : item.event_type === 'IN' ? 'Về bãi' : 'Không rõ';
             const time = item.scan_time ? new Date(item.scan_time).toLocaleString('vi-VN') : '---';
-            const face = item.face_image_url
-                ? '<a target="_blank" rel="noopener" href="' + escapeHtml(item.face_image_url) + '" class="local-text-blue-600 local-underline">Xem ảnh</a>'
-                : '<span class="local-text-slate-400">Không có</span>';
-            const plateImage = item.plate_image_url
-                ? '<a target="_blank" rel="noopener" href="' + escapeHtml(item.plate_image_url) + '" class="local-text-blue-600 local-underline">Xem ảnh</a>'
+            const images = item.face_image_url || item.plate_image_url
+                ? '<button type="button" class="history-image-open" data-history-id="' + Number(item.id) + '">Xem ảnh</button>'
                 : '<span class="local-text-slate-400">Không có</span>';
             return `<tr>
                 <td class="local-p-2">${escapeHtml(time)}</td>
@@ -268,14 +268,86 @@ async function loadAccessHistory() {
                 <td class="local-p-2">${gateLabel}</td>
                 <td class="local-p-2">${escapeHtml(item.rfid_uid || '---')} / ${escapeHtml(item.tx || '---')}</td>
                 <td class="local-p-2"><span class="${allowed ? 'local-text-emerald-700' : 'local-text-red-600'} local-font-bold">${allowed ? 'CHO PHÉP' : 'TỪ CHỐI'}</span><div>${escapeHtml(item.status || '')}</div></td>
-                <td class="local-p-2">${face}</td><td class="local-p-2">${plateImage}</td>
+                <td class="local-p-2">${images}</td>
                 <td class="local-p-2">${escapeHtml(item.message || '')}<div class="local-text-slate-400">${escapeHtml(item.plate_source || '')}</div></td>
             </tr>`;
         }).join('');
+        // Store only URLs from the current rendered page; no inline JS with untrusted data.
+        historyImageRecords = new Map(data.items.map(item => [Number(item.id), {
+            face: item.face_image_url || null,
+            plate: item.plate_image_url || null
+        }]));
     } catch (error) {
-        tbody.innerHTML = '<tr><td colspan="9" class="local-p-4 local-text-center local-text-red-600">' + escapeHtml(error.message) + '</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="8" class="local-p-4 local-text-center local-text-red-600">' + escapeHtml(error.message) + '</td></tr>';
     }
 }
+
+
+function showHistoryImages(faceUrl, plateUrl) {
+    const modal = $('history-image-modal');
+    if (!modal) return;
+    const setImage = (kind, url) => {
+        const image = $('history-' + kind + '-image');
+        const message = $('history-' + kind + '-message');
+        if (!image || !message) return;
+        image.onload = null;
+        image.onerror = null;
+        image.hidden = true;
+        image.removeAttribute('src');
+        message.hidden = false;
+        message.textContent = url ? 'Đang tải ảnh...' : 'Không có ảnh';
+        if (url) {
+            image.onload = () => {
+                image.hidden = false;
+                message.hidden = true;
+            };
+            image.onerror = () => {
+                image.hidden = true;
+                message.hidden = false;
+                message.textContent = 'Không tải được ảnh. Vui lòng kiểm tra Cloudinary.';
+            };
+            image.src = url;
+        }
+    };
+    setImage('face', faceUrl);
+    setImage('plate', plateUrl);
+    modal.hidden = false;
+    modal.setAttribute('aria-hidden', 'false');
+    document.body.classList.add('history-image-lock');
+    $('history-image-modal')?.querySelector('.history-image-close')?.focus();
+}
+
+function closeHistoryImages() {
+    const modal = $('history-image-modal');
+    if (!modal) return;
+    modal.hidden = true;
+    modal.setAttribute('aria-hidden', 'true');
+    document.body.classList.remove('history-image-lock');
+    for (const kind of ['face', 'plate']) {
+        const image = $('history-' + kind + '-image');
+        if (image) {
+            image.onload = null;
+            image.onerror = null;
+            image.removeAttribute('src');
+            image.hidden = true;
+        }
+    }
+}
+
+document.addEventListener('click', (event) => {
+    const button = event.target.closest?.('[data-history-id]');
+    if (button) {
+        const row = historyImageRecords.get(Number(button.dataset.historyId));
+        if (row) showHistoryImages(row.face, row.plate);
+    }
+    if (event.target.id === 'history-image-modal') closeHistoryImages();
+});
+
+document.addEventListener('keydown', (event) => {
+    if (event.key === 'Escape' && !$('history-image-modal')?.hidden) {
+        closeHistoryImages();
+    }
+});
 
 async function submitJsonForm(event, url, payload, successMessage, afterSuccess) {
     event.preventDefault();
