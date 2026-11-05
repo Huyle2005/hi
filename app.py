@@ -234,38 +234,26 @@ def get_dashboard_data():
             """
         ).fetchall()]
 
-    # Tính ghi chú trễ giờ dựa trên thời gian camera ghi nhận.
+    # Ghi chú giờ ra/vào thực tế do Pi ghi nhận, không đánh giá trễ giờ.
     notes = []
     for schedule in schedules:
-        dep_plan = schedule['departure_time']
-        dep_actual = schedule.get('actual_dep_time') or ''
-        ret_plan = schedule.get('return_time') or ''
-        ret_actual = schedule.get('actual_ret_time') or ''
-
-        if dep_actual and dep_actual > dep_plan:
+        driver_title = (
+            f"Tài xế: {schedule['driver_name']} "
+            f"({schedule['vehicle_plate']})"
+        )
+        departure = str(schedule.get('actual_dep_time') or '').strip()
+        arrival = str(schedule.get('actual_ret_time') or '').strip()
+        if departure:
             notes.append({
-                "type": "warning",
-                "title": (
-                    f"Tài xế: {schedule['driver_name']} "
-                    f"({schedule['vehicle_plate']})"
-                ),
-                "content": (
-                    "Xuất phát TRỄ so với lịch đăng ký "
-                    f"({dep_actual} vs {dep_plan})"
-                )
+                "type": "info",
+                "title": driver_title,
+                "content": f"Ra bến lúc {departure}"
             })
-
-        if ret_actual and ret_plan and ret_actual > ret_plan:
+        if arrival:
             notes.append({
-                "type": "danger",
-                "title": (
-                    f"Tài xế: {schedule['driver_name']} "
-                    f"({schedule['vehicle_plate']})"
-                ),
-                "content": (
-                    "Về bãi TRỄ so với lịch dự kiến "
-                    f"({ret_actual} vs {ret_plan})"
-                )
+                "type": "info",
+                "title": driver_title,
+                "content": f"Vào bến lúc {arrival}"
             })
 
     return jsonify({
