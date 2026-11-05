@@ -187,12 +187,12 @@ def driver_page():
 @app.route('/api/dashboard', methods=['GET'])
 def get_dashboard_data():
     if 'user_id' not in session:
-        return jsonify({"error": "Unauthorized"}), 401
-    notes.sort(
+        notes.sort(
         key=lambda note: note["content"].rsplit(" lúc ", 1)[-1],
         reverse=True
-    )
-
+      )
+        return jsonify({"error": "Unauthorized"}), 401
+    
     # Dùng context manager để tự đóng kết nối sau khi đọc dữ liệu.
     with get_db() as conn:
         drivers = [dict(row) for row in conn.execute(
