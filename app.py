@@ -481,7 +481,7 @@ def receive_access_history():
                 public_id=f"{event_id}_{suffix}",
                 overwrite=True,
                 resource_type='image',
-                type='authenticated'
+                type='upload'
             )
             if suffix == 'face':
                 face_public_id = result.get('public_id')
@@ -705,13 +705,15 @@ def access_history_image(log_id, kind):
 
         # URL tải ảnh có chữ ký, chỉ tạo sau khi xác thực phiên admin.
         import time
-        signed_url = cloudinary.utils.private_download_url(
+        
+        image_url = cloudinary.utils.cloudinary_url(
             row['public_id'],
-            "jpg",
-            {"resource_type": "image", "type": "authenticated",
-             "expires_at": int(time.time()) + 300, "attachment": False}
-        )
-        return redirect(signed_url, code=302)
+            resource_type='image',
+            type='upload',
+            secure=True
+        )[0]
+
+        return redirect(image_url, code=302)
     except Exception:
         app.logger.exception("Lỗi tạo URL ảnh lịch sử")
         return jsonify({"success": False, "message": "Không thể truy xuất ảnh bằng chứng"}), 500
