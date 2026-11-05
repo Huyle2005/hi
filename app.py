@@ -618,6 +618,105 @@ def delete_vehicle(vehicle_id):
     return jsonify({"success": True})
 
 
+# --- API LỊCH SỬ RA/VÀO DÀNH CHO QUẢN TRỊ VIÊN ---
+
+def require_admin():
+    if 'user_id' not in session:
+        return jsonify({"success": False, "message": "Chưa đăng nhập"}), 401
+    if (session.get('role') or '').strip().lower() not in ['admin', 'quản lý hệ thống']:
+        return jsonify({"success": False, "message": "Không có quyền truy cập"}), 403
+    return None
+
+
+@app.route('/api/access-history', methods=['GET'])
+def list_access_history():
+    denied = require_admin()
+    if denied:
+        return denied
+
+    try:
+        limit = min(max(int(request.args.get('limit', 50)), 1), 100)
+        gate = (request.args.get('gate') or '').strip().upper()
+        decision = (request.args.get('decision') or '').strip().upper()
+        date_from = (request.args.get('from') or '').strip()
+        date_to = (request.args.get('to') or '').strip()
+
+        clauses, params = [], []
+        if gate in ('IN', 'OUT'):
+            clauses.append("event_type = %s")
+            params.append(gate)
+        if decision in ('ALLOW', 'DENY'):
+            clauses.append("decision = %s")
+            params.append(decision)
+        if date_from:
+            clauses.append("scan_time >= %s::date")
+            params.append(date_from)
+        if date_to:
+            clauses.append("scan_time < (%s::date + INTERVAL '1 day')")
+            params.append(date_to)
+
+        where_sql = (" WHERE " + " AND ".join(clauses)) if clauses else ""
+        with get_db() as conn:
+            rows = conn.execute(f"""
+                SELECT id, event_id, rfid_uid, scan_time, tx, event_type,
+                       status, driver_code, driver_name, plate, gate,
+                       decision, message, plate_source,
+                       (face_image_public_id IS NOT NULL) AS has_face_image,
+                       (plate_image_public_id IS NOT NULL) AS has_plate_image
+                FROM rfid_logs
+                {where_sql}
+                ORDER BY scan_time DESC, id DESC
+                LIMIT %s
+            """, (*params, limit)).fetchall()
+
+        items = []
+        for row in rows:
+            item = dict(row)
+            item['scan_time'] = item['scan_time'].isoformat() if item.get('scan_time') else None
+            item['face_image_url'] = f"/api/access-history/{item['id']}/image/face" if item.pop('has_face_image') else None
+            item['plate_image_url'] = f"/api/access-history/{item['id']}/image/plate" if item.pop('has_plate_image') else None
+            items.append(item)
+
+        return jsonify({"success": True, "items": items})
+    except ValueError:
+        return jsonify({"success": False, "message": "Bộ lọc ngày hoặc số lượng không hợp lệ"}), 400
+    except Exception:
+        app.logger.exception("Lỗi đọc lịch sử ra/vào")
+        return jsonify({"success": False, "message": "Không thể tải lịch sử ra/vào"}), 500
+
+
+@app.route('/api/access-history/<int:log_id>/image/<kind>', methods=['GET'])
+def access_history_image(log_id, kind):
+    denied = require_admin()
+    if denied:
+        return denied
+    if kind not in ('face', 'plate'):
+        return jsonify({"success": False, "message": "Loại ảnh không hợp lệ"}), 400
+
+    column = 'face_image_public_id' if kind == 'face' else 'plate_image_public_id'
+    try:
+        with get_db() as conn:
+            row = conn.execute(
+                f"SELECT {column} AS public_id FROM rfid_logs WHERE id = %s",
+                (log_id,)
+            ).fetchone()
+        if not row or not row['public_id']:
+            return jsonify({"success": False, "message": "Không tìm thấy ảnh"}), 404
+
+        # URL tải ảnh có chữ ký, chỉ tạo sau khi xác thực phiên admin.
+        import time
+        signed_url = cloudinary.utils.private_download_url(
+            row['public_id'],
+            "jpg",
+            {"resource_type": "image", "type": "authenticated",
+             "expires_at": int(time.time()) + 300, "attachment": False}
+        )
+        return redirect(signed_url, code=302)
+    except Exception:
+        app.logger.exception("Lỗi tạo URL ảnh lịch sử")
+        return jsonify({"success": False, "message": "Không thể truy xuất ảnh bằng chứng"}), 500
+
+
 # --- API KIỂM TRA KẾT NỐI CLOUDINARY ---
 
 @app.route('/api/cloudinary-check', methods=['GET'])
