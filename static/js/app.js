@@ -103,6 +103,7 @@ function captureNextAngle() {
         return;
     }
 
+    context.drawImage(video, 0, 0, canvas.width, canvas.height);
     const image = canvas.toDataURL('image/jpeg', 0.85);
     capturedImages[currentStep] = image;
     $('cam-box')?.classList.add('flash-capture');
