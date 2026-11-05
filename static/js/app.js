@@ -1,6 +1,6 @@
 'use strict';
 
-const TAB_NAMES = ['overview', 'schedules', 'drivers', 'vehicles'];
+const TAB_NAMES = ['overview', 'schedules', 'drivers', 'vehicles', 'history'];
 let capturedImages = [null, null, null];
 let currentStep = 0;
 let mediaStream = null;
@@ -53,9 +53,11 @@ function switchTab(tab) {
         overview: 'Tổng quan hệ thống',
         schedules: 'Quản lý Lịch trình',
         drivers: 'Quản lý Tài xế',
-        vehicles: 'Quản lý Xe'
+        vehicles: 'Quản lý Xe',
+        history: 'Lịch sử ra/vào'
     };
     if ($('page-title')) $('page-title').textContent = titles[tab];
+    if (tab === 'history') loadAccessHistory();
 }
 
 async function openCameraModal() {
@@ -227,6 +229,51 @@ async function loadData() {
         }
     } finally {
         isLoading = false;
+    }
+}
+
+async function loadAccessHistory() {
+    const tbody = $('access-history-list');
+    if (!tbody) return;
+    tbody.innerHTML = '<tr><td colspan="9" class="local-p-4 local-text-center">Đang tải lịch sử...</td></tr>';
+    const params = new URLSearchParams({limit: '100'});
+    const from = $('history-from')?.value || '';
+    const to = $('history-to')?.value || '';
+    const gate = $('history-gate')?.value || '';
+    const decision = $('history-decision')?.value || '';
+    if (from) params.set('from', from);
+    if (to) params.set('to', to);
+    if (gate) params.set('gate', gate);
+    if (decision) params.set('decision', decision);
+    try {
+        const data = await requestJson('/api/access-history?' + params.toString());
+        if (!data.items?.length) {
+            tbody.innerHTML = '<tr><td colspan="9" class="local-p-4 local-text-center local-text-slate-400">Chưa có dữ liệu phù hợp.</td></tr>';
+            return;
+        }
+        tbody.innerHTML = data.items.map((item) => {
+            const allowed = item.decision === 'ALLOW' || item.status === 'SUCCESS';
+            const gateLabel = item.event_type === 'OUT' ? 'Xuất bến' : item.event_type === 'IN' ? 'Về bãi' : 'Không rõ';
+            const time = item.scan_time ? new Date(item.scan_time).toLocaleString('vi-VN') : '---';
+            const face = item.face_image_url
+                ? '<a target="_blank" rel="noopener" href="' + escapeHtml(item.face_image_url) + '" class="local-text-blue-600 local-underline">Xem ảnh</a>'
+                : '<span class="local-text-slate-400">Không có</span>';
+            const plateImage = item.plate_image_url
+                ? '<a target="_blank" rel="noopener" href="' + escapeHtml(item.plate_image_url) + '" class="local-text-blue-600 local-underline">Xem ảnh</a>'
+                : '<span class="local-text-slate-400">Không có</span>';
+            return `<tr>
+                <td class="local-p-2">${escapeHtml(time)}</td>
+                <td class="local-p-2">${escapeHtml(item.driver_name || item.driver_code || 'Không nhận diện')}</td>
+                <td class="local-p-2 local-font-semibold">${escapeHtml(item.plate || '---')}</td>
+                <td class="local-p-2">${gateLabel}</td>
+                <td class="local-p-2">${escapeHtml(item.rfid_uid || '---')} / ${escapeHtml(item.tx || '---')}</td>
+                <td class="local-p-2"><span class="${allowed ? 'local-text-emerald-700' : 'local-text-red-600'} local-font-bold">${allowed ? 'CHO PHÉP' : 'TỪ CHỐI'}</span><div>${escapeHtml(item.status || '')}</div></td>
+                <td class="local-p-2">${face}</td><td class="local-p-2">${plateImage}</td>
+                <td class="local-p-2">${escapeHtml(item.message || '')}<div class="local-text-slate-400">${escapeHtml(item.plate_source || '')}</div></td>
+            </tr>`;
+        }).join('');
+    } catch (error) {
+        tbody.innerHTML = '<tr><td colspan="9" class="local-p-4 local-text-center local-text-red-600">' + escapeHtml(error.message) + '</td></tr>';
     }
 }
 
