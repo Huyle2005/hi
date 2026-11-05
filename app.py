@@ -3,6 +3,8 @@ import base64
 import re
 import cloudinary
 import cloudinary.api
+import cloudinary.uploader
+import uuid
 from datetime import datetime
 from zoneinfo import ZoneInfo
 from flask import (
@@ -109,6 +111,24 @@ def init_db():
             )
         ''')
 
+        # Bổ sung metadata lịch sử ra/vào, không làm mất dữ liệu cũ.
+        cursor.execute("""
+            ALTER TABLE rfid_logs
+                ADD COLUMN IF NOT EXISTS event_id TEXT,
+                ADD COLUMN IF NOT EXISTS driver_code TEXT,
+                ADD COLUMN IF NOT EXISTS driver_name TEXT,
+                ADD COLUMN IF NOT EXISTS plate TEXT,
+                ADD COLUMN IF NOT EXISTS gate TEXT,
+                ADD COLUMN IF NOT EXISTS decision TEXT,
+                ADD COLUMN IF NOT EXISTS message TEXT,
+                ADD COLUMN IF NOT EXISTS plate_source TEXT,
+                ADD COLUMN IF NOT EXISTS face_image_public_id TEXT,
+                ADD COLUMN IF NOT EXISTS plate_image_public_id TEXT
+        """)
+        cursor.execute("""
+            CREATE UNIQUE INDEX IF NOT EXISTS rfid_logs_event_id_uidx
+            ON rfid_logs (event_id) WHERE event_id IS NOT NULL
+        """)
         conn.commit()
 
 
@@ -300,150 +320,203 @@ def delete_schedule(schedule_id):
 @app.route('/api/gate-event', methods=['POST'])
 def handle_gate_event():
     data = request.get_json(silent=True) or {}
-
-    # Chuẩn hóa biển số: bỏ dấu cách và ký tự phân cách
-    plate = re.sub(
-        r'[^A-Z0-9]', '', (data.get('plate') or '').upper()
-    )
+    plate = re.sub(r'[^A-Z0-9]', '', (data.get('plate') or '').upper())
     action = (data.get('action') or '').strip().upper()
     driver_code = (data.get('driver_code') or '').strip()
     rfid_uid = data.get('rfid_uid') or data.get('uid') or 'UNKNOWN'
     tx = data.get('tx')
+    event_id = (data.get('event_id') or uuid.uuid4().hex).strip()
 
     now_time = datetime.now(
         ZoneInfo('Asia/Ho_Chi_Minh')
     ).strftime('%H:%M')
 
-    # Kiểm tra loại sự kiện
     if action not in ('IN', 'OUT'):
-        return jsonify({
-            'success': False,
-            'message': 'action phải là IN hoặc OUT'
-        }), 400
-
-    # Bắt buộc phải có biển số và mã tài xế
+        return jsonify({'success': False, 'message': 'action phải là IN hoặc OUT'}), 400
     if not plate or not driver_code:
-        return jsonify({
-            'success': False,
-            'message': 'Thiếu biển số hoặc mã tài xế đã nhận diện'
-        }), 400
+        return jsonify({'success': False, 'message': 'Thiếu biển số hoặc mã tài xế đã nhận diện'}), 400
 
-    # OUT = xe xuất bến; IN = xe về bãi
-    expected_status = (
-        'Chờ xuất bến' if action == 'OUT' else 'Đang chạy'
-    )
+    expected_status = 'Chờ xuất bến' if action == 'OUT' else 'Đang chạy'
 
     try:
         with get_db() as conn:
-            # Tìm lịch trình theo biển số và trạng thái phù hợp
-            schedule = conn.execute('''
-                SELECT s.id, s.status,
-                       d.code AS driver_code,
-                       d.name AS driver_name,
-                       v.plate AS vehicle_plate
+            # Idempotency: Pi gửi lại cùng event_id sẽ không cập nhật lịch trình lần hai.
+            previous = conn.execute(
+                "SELECT status, message FROM rfid_logs WHERE event_id = %s",
+                (event_id,)
+            ).fetchone()
+            if previous:
+                ok = previous['status'] == 'SUCCESS'
+                return jsonify({
+                    'success': ok,
+                    'message': previous.get('message') or 'Sự kiện đã được ghi nhận trước đó',
+                    'event_id': event_id
+                }), 200 if ok else 409
+
+            schedule = conn.execute("""
+                SELECT s.id, s.status, d.code AS driver_code,
+                       d.name AS driver_name, v.plate AS vehicle_plate
                 FROM schedules s
                 JOIN drivers d ON d.id = s.driver_id
                 JOIN vehicles v ON v.id = s.vehicle_id
-                WHERE regexp_replace(
-                    upper(v.plate), '[^A-Z0-9]', '', 'g'
-                ) = %s
+                WHERE regexp_replace(upper(v.plate), '[^A-Z0-9]', '', 'g') = %s
                   AND s.status = %s
                 ORDER BY s.id DESC
                 LIMIT 1
-            ''', (plate, expected_status)).fetchone()
+            """, (plate, expected_status)).fetchone()
 
-            # Không có lịch trình phù hợp thì từ chối
             if not schedule:
-                latest = conn.execute('''
+                latest = conn.execute("""
                     SELECT s.status
-                    FROM schedules s
-                    JOIN vehicles v ON v.id = s.vehicle_id
-                    WHERE regexp_replace(
-                        upper(v.plate), '[^A-Z0-9]', '', 'g'
-                    ) = %s
-                    ORDER BY s.id DESC
-                    LIMIT 1
-                ''', (plate,)).fetchone()
-
+                    FROM schedules s JOIN vehicles v ON v.id = s.vehicle_id
+                    WHERE regexp_replace(upper(v.plate), '[^A-Z0-9]', '', 'g') = %s
+                    ORDER BY s.id DESC LIMIT 1
+                """, (plate,)).fetchone()
                 status_msg = (
-                    f"Trạng thái lịch trình hiện tại là "
-                    f"'{latest['status']}', không phù hợp "
-                    f"thao tác {action}"
-                    if latest else
-                    'Không tìm thấy lịch trình cho biển số này'
+                    f"Trạng thái lịch trình hiện tại là '{latest['status']}', không phù hợp thao tác {action}"
+                    if latest else 'Không tìm thấy lịch trình cho biển số này'
                 )
-
-                conn.execute('''
+                conn.execute("""
                     INSERT INTO rfid_logs
-                        (rfid_uid, tx, event_type, status)
-                    VALUES (%s, %s, %s, %s)
-                ''', (
-                    rfid_uid, tx, action, 'SCHEDULE_NOT_READY'
-                ))
+                        (rfid_uid, tx, event_type, status, event_id, driver_code,
+                         plate, gate, decision, message)
+                    VALUES (%s, %s, %s, %s, %s, %s, %s, %s, 'DENY', %s)
+                """, (rfid_uid, tx, action, 'SCHEDULE_NOT_READY', event_id,
+                      driver_code, plate, action, status_msg))
+                return jsonify({'success': False, 'message': status_msg, 'event_id': event_id}), 409
 
-                return jsonify({
-                    'success': False,
-                    'message': status_msg
-                }), 409
-
-            # Kiểm tra tài xế có đúng lịch trình không
             if schedule['driver_code'] != driver_code:
-                conn.execute('''
+                status_msg = 'Khuôn mặt nhận diện không khớp tài xế của lịch trình'
+                conn.execute("""
                     INSERT INTO rfid_logs
-                        (rfid_uid, tx, event_type, status)
-                    VALUES (%s, %s, %s, %s)
-                ''', (
-                    rfid_uid, tx, action, 'DRIVER_MISMATCH'
-                ))
+                        (rfid_uid, tx, event_type, status, event_id, driver_code,
+                         driver_name, plate, gate, decision, message)
+                    VALUES (%s, %s, %s, 'DRIVER_MISMATCH', %s, %s, %s, %s, %s, 'DENY', %s)
+                """, (rfid_uid, tx, action, event_id, driver_code,
+                      schedule['driver_name'], plate, action, status_msg))
+                return jsonify({'success': False, 'message': status_msg, 'event_id': event_id}), 403
 
-                return jsonify({
-                    'success': False,
-                    'message':
-                        'Khuôn mặt nhận diện không khớp '
-                        'tài xế của lịch trình'
-                }), 403
-
-            # Chỉ cập nhật khi biển số, tài xế và trạng thái đúng
             if action == 'OUT':
-                conn.execute('''
-                    UPDATE schedules
-                    SET actual_dep_time = %s,
-                        status = 'Đang chạy'
+                conn.execute("""
+                    UPDATE schedules SET actual_dep_time = %s, status = 'Đang chạy'
                     WHERE id = %s
-                ''', (now_time, schedule['id']))
+                """, (now_time, schedule['id']))
             else:
-                conn.execute('''
-                    UPDATE schedules
-                    SET actual_ret_time = %s,
-                        status = 'Đã về bãi'
+                conn.execute("""
+                    UPDATE schedules SET actual_ret_time = %s, status = 'Đã về bãi'
                     WHERE id = %s
-                ''', (now_time, schedule['id']))
+                """, (now_time, schedule['id']))
 
-            # Ghi nhận sự kiện thành công
-            conn.execute('''
+            status_msg = f"Đã ghi nhận {action} xe {plate} lúc {now_time}"
+            conn.execute("""
                 INSERT INTO rfid_logs
-                    (rfid_uid, tx, event_type, status)
-                VALUES (%s, %s, %s, %s)
-            ''', (rfid_uid, tx, action, 'SUCCESS'))
+                    (rfid_uid, tx, event_type, status, event_id, driver_code,
+                     driver_name, plate, gate, decision, message)
+                VALUES (%s, %s, %s, 'SUCCESS', %s, %s, %s, %s, %s, 'ALLOW', %s)
+            """, (rfid_uid, tx, action, event_id, driver_code,
+                  schedule['driver_name'], plate, action, status_msg))
 
         return jsonify({
-            'success': True,
-            'driver_code': driver_code,
-            'plate': plate,
-            'action': action,
-            'time': now_time,
-            'message':
-                f"Đã ghi nhận {action} xe {plate} lúc {now_time}"
+            'success': True, 'driver_code': driver_code, 'plate': plate,
+            'action': action, 'time': now_time, 'event_id': event_id,
+            'message': status_msg
         }), 200
 
     except Exception:
-        app.logger.exception(
-            'Lỗi cập nhật lịch trình từ Raspberry Pi'
-        )
+        app.logger.exception('Lỗi cập nhật lịch trình từ Raspberry Pi')
+        return jsonify({'success': False, 'message': 'Lỗi máy chủ khi cập nhật lịch trình'}), 500
+
+
+@app.route('/api/access-history', methods=['POST'])
+def receive_access_history():
+    # API key riêng cho Raspberry Pi; không dùng cookie đăng nhập của trình duyệt.
+    expected_key = os.environ.get('PI_API_KEY')
+    supplied_key = request.headers.get('X-Device-Key', '')
+    if not expected_key or not supplied_key or not __import__('hmac').compare_digest(expected_key, supplied_key):
+        return jsonify({'success': False, 'message': 'Thiết bị chưa được xác thực'}), 401
+
+    event_id = (request.form.get('event_id') or '').strip()
+    if not event_id or len(event_id) > 100:
+        return jsonify({'success': False, 'message': 'event_id không hợp lệ'}), 400
+
+    gate = (request.form.get('gate') or '').strip().upper()
+    if gate not in ('IN', 'OUT'):
+        gate = 'UNKNOWN'
+    action = gate
+    uid = (request.form.get('uid') or 'UNKNOWN').strip() or 'UNKNOWN'
+    tx = request.form.get('tx') or None
+    driver_code = request.form.get('driver_code') or None
+    driver_name = request.form.get('driver_name') or None
+    plate = re.sub(r'[^A-Z0-9]', '', (request.form.get('plate') or '').upper()) or None
+    decision = (request.form.get('decision') or 'DENY').strip().upper()
+    if decision not in ('ALLOW', 'DENY'):
+        decision = 'DENY'
+    message = request.form.get('message') or ''
+    plate_source = request.form.get('plate_source') or None
+    status = 'SUCCESS' if decision == 'ALLOW' else 'DENIED'
+
+    try:
+        face_public_id = None
+        plate_public_id = None
+        folder = 'iu h-smart-parking/access-history'.replace(' ', '')
+        for field, suffix in (('face_image', 'face'), ('plate_image', 'plate')):
+            uploaded_file = request.files.get(field)
+            if not uploaded_file or not uploaded_file.filename:
+                continue
+            content = uploaded_file.read()
+            if not content:
+                continue
+            if len(content) > 8 * 1024 * 1024:
+                return jsonify({'success': False, 'message': 'Ảnh vượt quá giới hạn 8 MB'}), 413
+            uploaded_file.stream.seek(0)
+            result = cloudinary.uploader.upload(
+                uploaded_file,
+                folder=folder,
+                public_id=f"{event_id}_{suffix}",
+                overwrite=True,
+                resource_type='image',
+                type='authenticated'
+            )
+            if suffix == 'face':
+                face_public_id = result.get('public_id')
+            else:
+                plate_public_id = result.get('public_id')
+
+        with get_db() as conn:
+            conn.execute("""
+                INSERT INTO rfid_logs
+                    (rfid_uid, tx, event_type, status, event_id, driver_code,
+                     driver_name, plate, gate, decision, message, plate_source,
+                     face_image_public_id, plate_image_public_id)
+                VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+                ON CONFLICT (event_id) WHERE event_id IS NOT NULL
+                DO UPDATE SET
+                    driver_code = COALESCE(EXCLUDED.driver_code, rfid_logs.driver_code),
+                    driver_name = COALESCE(EXCLUDED.driver_name, rfid_logs.driver_name),
+                    plate = COALESCE(EXCLUDED.plate, rfid_logs.plate),
+                    gate = COALESCE(EXCLUDED.gate, rfid_logs.gate),
+                    decision = EXCLUDED.decision,
+                    message = EXCLUDED.message,
+                    plate_source = COALESCE(EXCLUDED.plate_source, rfid_logs.plate_source),
+                    face_image_public_id = COALESCE(EXCLUDED.face_image_public_id, rfid_logs.face_image_public_id),
+                    plate_image_public_id = COALESCE(EXCLUDED.plate_image_public_id, rfid_logs.plate_image_public_id),
+                    status = CASE
+                        WHEN rfid_logs.status IN ('SUCCESS', 'SCHEDULE_NOT_READY', 'DRIVER_MISMATCH')
+                        THEN rfid_logs.status ELSE EXCLUDED.status END
+            """, (uid, tx, action, status, event_id, driver_code, driver_name,
+                  plate, gate, decision, message, plate_source,
+                  face_public_id, plate_public_id))
+
         return jsonify({
-            'success': False,
-            'message': 'Lỗi máy chủ khi cập nhật lịch trình'
-        }), 500
+            'success': True, 'event_id': event_id,
+            'face_image_uploaded': bool(face_public_id),
+            'plate_image_uploaded': bool(plate_public_id)
+        }), 200
+
+    except Exception:
+        app.logger.exception('Lỗi nhận lịch sử/ảnh từ Raspberry Pi')
+        return jsonify({'success': False, 'message': 'Không thể lưu lịch sử hoặc ảnh bằng chứng'}), 500
+
 
 # --- API TÀI XẾ & FACE DATASET ---
 
