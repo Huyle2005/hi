@@ -450,7 +450,7 @@ def receive_access_history():
         gate = 'UNKNOWN'
     action = gate
     uid = (request.form.get('uid') or 'UNKNOWN').strip() or 'UNKNOWN'
-    tx = request.form.get('tx') or None
+    tx = (request.form.get('tx') or '').strip() or 'UNKNOWN'
     driver_code = request.form.get('driver_code') or None
     driver_name = request.form.get('driver_name') or None
     plate = re.sub(r'[^A-Z0-9]', '', (request.form.get('plate') or '').upper()) or None
