@@ -193,7 +193,7 @@ function renderNotes(notes) {
             <div class="local-text-xs local-font-bold local-text-amber-900">${escapeHtml(note.title)}</div>
             <div class="local-text-11px local-text-amber-800">${escapeHtml(note.content)}</div>
         </div>`).join('') :
-        '<div class="local-text-xs local-text-slate-400 local-p-3 local-bg-slate-50 local-rounded-lg">Không có ghi chú trễ giờ nào.</div>';
+        '<div class="local-text-xs local-text-slate-400 local-p-3 local-bg-slate-50 local-rounded-lg">Không có ghi chú  nào.</div>';
 }
 
 function updateSelectOptions(elementId, items, getLabel) {
