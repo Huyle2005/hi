@@ -38,6 +38,7 @@ cloudinary.config(
 if not app.secret_key:
     raise RuntimeError("Chưa cấu hình SECRET_KEY trên Render")
 
+
 def get_db():
     database_url = os.environ.get("DATABASE_URL")
 
@@ -52,13 +53,11 @@ def get_db():
     return psycopg.connect(database_url, row_factory=dict_row)
 
 
-
 def init_db():
     with get_db() as conn:
         cursor = conn.cursor()
 
         # 1. Bảng Users
-        
 
         # 2. Bảng Tài xế
         cursor.execute('''
@@ -133,7 +132,6 @@ def init_db():
         conn.commit()
 
 
-
 # --- AUTHENTICATION ---
 
 
@@ -160,7 +158,6 @@ def login():
         if not valid:
             return jsonify({"success": False, "message": "Sai tài khoản hoặc mật khẩu"}), 400
 
-        
         session.update(
             user_id=user['id'], full_name=user['full_name'], role=user['role'])
         role = (user['role'] or '').strip().lower()
@@ -267,8 +264,9 @@ def get_dashboard_data():
             "active_schedules": sum(
                 schedule['status'] == 'Đang chạy' for schedule in schedules
             ),
-            "total_incidents": sum(
-                incident['status'] == 'Chờ xử lý' for incident in incidents
+            "completed_schedules": sum(
+                schedule['status'] == 'Đã về bãi'
+                for schedule in schedules
             )
         }
     })
@@ -303,7 +301,6 @@ def delete_schedule(schedule_id):
     return jsonify({"success": True})
 
 # --- API NHẬN TÍN HIỆU TỰ ĐỘNG TỪ RASPBERRY PI 4 KHI XE RA/VÀO CỔNG ---
-
 
 
 @app.route('/api/gate-event', methods=['POST'])
@@ -441,7 +438,8 @@ def receive_access_history():
     tx = (request.form.get('tx') or '').strip() or 'UNKNOWN'
     driver_code = request.form.get('driver_code') or None
     driver_name = request.form.get('driver_name') or None
-    plate = re.sub(r'[^A-Z0-9]', '', (request.form.get('plate') or '').upper()) or None
+    plate = re.sub(r'[^A-Z0-9]', '',
+                   (request.form.get('plate') or '').upper()) or None
     decision = (request.form.get('decision') or 'DENY').strip().upper()
     if decision not in ('ALLOW', 'DENY'):
         decision = 'DENY'
@@ -513,7 +511,6 @@ def receive_access_history():
 
 
 # --- API TÀI XẾ & FACE DATASET ---
-
 
 
 @app.route('/api/drivers', methods=['POST'])
@@ -620,6 +617,7 @@ def add_driver():
             "message": "Không thể lưu tài xế"
         }), 500
 
+
 @app.route('/api/drivers/<int:driver_id>', methods=['DELETE'])
 def delete_driver(driver_id):
     denied = require_admin()
@@ -694,7 +692,6 @@ def delete_driver(driver_id):
         return jsonify({
             "success": False, "message": "Không thể xóa tài xế"
         }), 500
-
 
 
 @app.route('/api/face-dataset', methods=['GET'])
@@ -835,9 +832,12 @@ def list_access_history():
         items = []
         for row in rows:
             item = dict(row)
-            item['scan_time'] = item['scan_time'].isoformat() if item.get('scan_time') else None
-            item['face_image_url'] = f"/api/access-history/{item['id']}/image/face" if item.pop('has_face_image') else None
-            item['plate_image_url'] = f"/api/access-history/{item['id']}/image/plate" if item.pop('has_plate_image') else None
+            item['scan_time'] = item['scan_time'].isoformat(
+            ) if item.get('scan_time') else None
+            item['face_image_url'] = f"/api/access-history/{item['id']}/image/face" if item.pop(
+                'has_face_image') else None
+            item['plate_image_url'] = f"/api/access-history/{item['id']}/image/plate" if item.pop(
+                'has_plate_image') else None
             items.append(item)
 
         return jsonify({"success": True, "items": items})
@@ -868,7 +868,7 @@ def access_history_image(log_id, kind):
 
         # URL tải ảnh có chữ ký, chỉ tạo sau khi xác thực phiên admin.
         import time
-        
+
         image_url = cloudinary.utils.cloudinary_url(
             row['public_id'],
             resource_type='image',

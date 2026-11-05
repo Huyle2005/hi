@@ -211,7 +211,7 @@ async function loadData() {
         const data = await requestJson('/api/dashboard');
         $('kpi-vehicles').textContent = data.kpi.total_vehicles ?? 0;
         $('kpi-schedules').textContent = data.kpi.active_schedules ?? 0;
-        $('kpi-incidents').textContent = data.kpi.total_incidents ?? 0;
+        $('kpi-completed').textContent = data.kpi.completed_schedules ?? 0;
         renderNotes(data.notes || []);
         renderSchedules(data.schedules || []);
         renderDrivers(data.drivers || []);
