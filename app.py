@@ -188,7 +188,7 @@ def driver_page():
 def get_dashboard_data():
     if 'user_id' not in session:
         return jsonify({"error": "Unauthorized"}), 401
-    
+
     # Dùng context manager để tự đóng kết nối sau khi đọc dữ liệu.
     with get_db() as conn:
         drivers = [dict(row) for row in conn.execute(
@@ -224,19 +224,19 @@ def get_dashboard_data():
         )
         departure = str(schedule.get('actual_dep_time') or '').strip()
         arrival = str(schedule.get('actual_ret_time') or '').strip()
-        if departure:
-            notes.append({
-                "type": "info",
-                "title": driver_title,
-                "content": f"Ra bến lúc {departure}"
-            })
+
         if arrival:
             notes.append({
                 "type": "info",
                 "title": driver_title,
                 "content": f"Vào bến lúc {arrival}"
             })
-    
+        if departure:
+            notes.append({
+                "type": "info",
+                "title": driver_title,
+                "content": f"Ra bến lúc {departure}"
+            })
 
     return jsonify({
         "drivers": drivers,
