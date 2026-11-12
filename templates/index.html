@@ -61,87 +61,57 @@
 
     <!-- MAIN CONTENT -->
     <main class="local-flex-1 local-flex local-flex-col local-overflow-y-auto">
-        <header
-            class="local-bg-white local-border-b local-px-6 local-py-3 local-flex local-items-center local-justify-between local-sticky local-top-0 local-z-10 local-shadow-sm">
-            <h1 id="page-title" class="local-text-xl local-font-bold local-text-slate-800">Tổng quan hệ thống</h1>
+        <header class="dashboard-page-header">
+            <div><h1 id="page-title">TỔNG QUAN HỆ THỐNG</h1><p>Giám sát và quản lí hệ thống</p></div>
         </header>
 
         <!-- VIEW 1: TỔNG QUAN -->
-        <div id="view-overview" class="local-p-6 local-space-y-6">
-            <div class="local-grid local-grid-cols-3 local-gap-6">
-                <div
-                    class="local-bg-white local-p-4 local-rounded-xl local-border local-border-slate-200 local-shadow-sm local-flex local-items-center local-justify-between">
-                    <div>
-                        <div class="local-text-xs local-text-slate-500 local-font-medium">TỔNG PHƯƠNG TIỆN</div>
-                        <div id="kpi-vehicles" class="local-text-2xl local-font-bold local-text-slate-800">0</div>
+        <section id="view-overview" class="dashboard-view">
+            <div class="dashboard-layout">
+                <div class="dashboard-main">
+                    <div class="dashboard-kpis">
+                        <button type="button" class="dashboard-kpi" onclick="switchTab('vehicles')">
+                            <span class="dashboard-kpi-icon"><i class="fa-solid fa-car-side"></i></span>
+                            <span class="dashboard-kpi-text"><span class="dashboard-kpi-label">TỔNG PHƯƠNG TIỆN</span><strong id="kpi-vehicles">0</strong></span>
+                            <span class="dashboard-kpi-arrow"><i class="fa-solid fa-chevron-right"></i></span>
+                        </button>
+                        <button type="button" class="dashboard-kpi" onclick="switchTab('schedules')">
+                            <span class="dashboard-kpi-icon"><i class="fa-solid fa-calendar-days"></i></span>
+                            <span class="dashboard-kpi-text"><span class="dashboard-kpi-label">LỊCH TRÌNH ĐANG CHẠY</span><strong id="kpi-schedules">0</strong></span>
+                            <span class="dashboard-kpi-arrow"><i class="fa-solid fa-chevron-right"></i></span>
+                        </button>
+                        <button type="button" class="dashboard-kpi" onclick="switchTab('schedules')">
+                            <span class="dashboard-kpi-icon"><i class="fa-solid fa-circle-check"></i></span>
+                            <span class="dashboard-kpi-text"><span class="dashboard-kpi-label">CHUYẾN ĐÃ HOÀN THÀNH</span><strong id="kpi-completed">0</strong></span>
+                            <span class="dashboard-kpi-arrow"><i class="fa-solid fa-chevron-right"></i></span>
+                        </button>
                     </div>
-                    <div
-                        class="local-w-10 local-h-10 local-bg-blue-100 local-text-blue-600 local-rounded-xl local-flex local-items-center local-justify-center local-font-bold">
-                        <i class="fa-solid fa-truck"></i></div>
+                    <section class="dashboard-panel dashboard-schedules">
+                        <div class="dashboard-panel-heading">
+                            <h2>Lịch trình sơ bộ xe xuất bến / về bãi</h2>
+                            <div class="dashboard-panel-actions">
+                                <label class="dashboard-search"><i class="fa-solid fa-magnifying-glass"></i><input id="overview-search" type="search" placeholder="Tìm kiếm..." aria-label="Tìm lịch trình"></label>
+                                <button type="button" class="dashboard-detail-button" onclick="switchTab('schedules')"><i class="fa-solid fa-filter"></i> Xem chi tiết <i class="fa-solid fa-arrow-right"></i></button>
+                            </div>
+                        </div>
+                        <div class="dashboard-table-wrap">
+                            <table class="dashboard-table">
+                                <thead><tr><th>TÀI XẾ</th><th>BIỂN SỐ</th><th>XUẤT BẾN (ĐK / TT)</th><th>VỀ BÃI (ĐK / TT)</th><th>TRẠNG THÁI</th></tr></thead>
+                                <tbody id="overview-schedules-list"></tbody>
+                            </table>
+                        </div>
+                        <div class="dashboard-table-footer"><span id="overview-count">Hiển thị 0 lịch trình</span><button type="button" onclick="switchTab('schedules')">Xem tất cả <i class="fa-solid fa-arrow-right"></i></button></div>
+                    </section>
                 </div>
-
-                <div
-                    class="local-bg-white local-p-4 local-rounded-xl local-border local-border-slate-200 local-shadow-sm local-flex local-items-center local-justify-between">
-                    <div>
-                        <div class="local-text-xs local-text-slate-500 local-font-medium">LỊCH TRÌNH ĐANG CHẠY</div>
-                        <div id="kpi-schedules" class="local-text-2xl local-font-bold local-text-emerald-600">0</div>
+                <aside class="dashboard-panel dashboard-notifications">
+                    <div class="dashboard-notification-heading">
+                        <h2><span class="dashboard-bell"><i class="fa-solid fa-bell"></i></span> Thông báo ra vào</h2>
+                        <button type="button" onclick="switchTab('history')">Xem tất cả <i class="fa-solid fa-arrow-right"></i></button>
                     </div>
-                    <div
-                        class="local-w-10 local-h-10 local-bg-emerald-100 local-text-emerald-600 local-rounded-xl local-flex local-items-center local-justify-center local-font-bold">
-                        <i class="fa-solid fa-route"></i></div>
-                </div>
-
-                <div
-                    class="local-bg-white local-p-4 local-rounded-xl local-border local-border-slate-200 local-shadow-sm local-flex local-items-center local-justify-between">
-                    <div>
-                        <div class="local-text-xs local-text-slate-500 local-font-medium">CHUYẾN ĐÃ HOÀN THÀNH</div>
-                        <div id="kpi-completed" class="local-text-2xl local-font-bold local-text-green-600">0</div>
-                    </div>
-                    <div
-                        class="local-w-10 local-h-10 local-bg-green-100 local-text-green-600 local-rounded-xl local-flex local-items-center local-justify-center local-font-bold">
-                        <i class="fa-solid fa-check-circle"></i></div>
-                </div>
+                    <div id="notes-container" class="dashboard-note-list" aria-live="polite"></div>
+                </aside>
             </div>
-
-            <div class="local-grid local-grid-cols-3 local-gap-6">
-                <div
-                    class="local-col-span-2 local-bg-white local-p-5 local-rounded-xl local-border local-border-slate-200 local-shadow-sm local-space-y-4">
-                    <div class="local-flex local-justify-between local-items-center">
-                        <h2 class="local-font-bold local-text-slate-800 local-text-base">Lịch trình sơ bộ xe xuất bến /
-                            về bãi</h2>
-
-                        <button onclick="switchTab('schedules')"
-                            class="local-text-xs local-text-blue-600 local-font-semibold local-hover-underline"
-                            class="btn-link"> Xem chi tiết &gt;</button>
-                    </div>
-
-                    <div class="local-overflow-x-auto">
-                        <table class="local-w-full local-text-left local-text-xs">
-                            <thead>
-                                <tr class="local-border-b local-text-slate-400 local-font-semibold local-uppercase">
-                                    <th class="local-pb-3">TÀI XẾ</th>
-                                    <th class="local-pb-3">BIỂN SỐ</th>
-                                    <th class="local-pb-3">XUẤT BẾN (DK / TT)</th>
-                                    <th class="local-pb-3">VỀ BÃI (DK / TT)</th>
-                                    <th class="local-pb-3">TRẠNG THÁI</th>
-                                </tr>
-                            </thead>
-                            <tbody id="overview-schedules-list" class="local-divide-y"></tbody>
-                        </table>
-                    </div>
-                </div>
-
-                <!-- GHI CHÚ TRỄ GIỜ -->
-                <div
-                    class="local-bg-white local-p-5 local-rounded-xl local-border local-border-slate-200 local-shadow-sm local-space-y-4">
-                    <div class="local-flex local-justify-between local-items-center">
-                        <h2 class="local-font-bold local-text-slate-800 local-text-base">Ghi chú ra vào</h2>
-                        <i class="fa-solid fa-bell local-text-amber-500 local-text-xs"></i>
-                    </div>
-                    <div id="notes-container" class="local-space-y-3 local-max-h-80 local-overflow-y-auto"></div>
-                </div>
-            </div>
-        </div>
+        </section>
 
         <!-- VIEW 2: QUẢN LÝ LỊCH TRÌNH -->
         <div id="view-schedules" class="local-p-6 local-space-y-6 local-hidden">
