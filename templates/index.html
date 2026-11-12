@@ -281,27 +281,21 @@
                         class="local-bg-blue-600 local-text-white local-px-4 local-py-2 local-rounded-lg local-text-xs local-font-bold">Lọc
                         lịch sử</button>
                 </div>
-                <div class="local-overflow-x-auto">
-                    <table class="local-w-full local-text-left local-text-xs">
-                        <thead>
-                            <tr class="local-border-b local-text-slate-400 local-font-semibold">
-                                <th class="local-p-2">THỜI GIAN</th>
-                                <th class="local-p-2">TÀI XẾ</th>
-                                <th class="local-p-2">BIỂN SỐ</th>
-                                <th class="local-p-2">CỔNG</th>
-                                <th class="local-p-2">RFID / TX</th>
-                                <th class="local-p-2">KẾT QUẢ</th>
-                                <th class="local-p-2">HÌNH ẢNH</th>
-                                <th class="local-p-2">CHI TIẾT</th>
-                            </tr>
-                        </thead>
-                        <tbody id="access-history-list" class="local-divide-y">
-                            <tr>
-                                <td colspan="8" class="local-p-4 local-text-center local-text-slate-400">Chưa tải lịch
-                                    sử.</td>
-                            </tr>
-                        </tbody>
-                    </table>
+                <div class="history-split-layout">
+                    <section class="history-gate-panel history-out">
+                        <div class="history-gate-heading">
+                            <div><h3><i class="fa-solid fa-arrow-right-from-bracket"></i> Lịch sử xe ra</h3><p>Cổng OUT · Xuất bến</p></div>
+                            <span id="history-out-count" class="history-count">0 lượt</span>
+                        </div>
+                        <div class="history-gate-list" id="history-out-list"><p class="history-empty">Chưa tải lịch sử.</p></div>
+                    </section>
+                    <section class="history-gate-panel history-in">
+                        <div class="history-gate-heading">
+                            <div><h3><i class="fa-solid fa-arrow-right-to-bracket"></i> Lịch sử xe vào</h3><p>Cổng IN · Về bãi</p></div>
+                            <span id="history-in-count" class="history-count">0 lượt</span>
+                        </div>
+                        <div class="history-gate-list" id="history-in-list"><p class="history-empty">Chưa tải lịch sử.</p></div>
+                    </section>
                 </div>
             </div>
         </div>
