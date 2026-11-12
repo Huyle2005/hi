@@ -351,10 +351,21 @@ def handle_gate_event():
                     WHERE regexp_replace(upper(v.plate), '[^A-Z0-9]', '', 'g') = %s
                     ORDER BY s.id DESC LIMIT 1
                 """, (plate,)).fetchone()
-                status_msg = (
-                    f"Trạng thái lịch trình hiện tại là '{latest['status']}', không phù hợp thao tác {action}"
-                    if latest else 'Không tìm thấy lịch trình cho biển số này'
-                )
+                if latest:
+                    status_msg = (
+                        f"Trạng thái lịch trình hiện tại là '{latest['status']}', "
+                        f"không phù hợp thao tác {action}"
+                    )
+                else:
+                    vehicle = conn.execute("""
+                        SELECT id FROM vehicles
+                        WHERE regexp_replace(upper(plate), '[^A-Z0-9]', '', 'g') = %s
+                        LIMIT 1
+                    """, (plate,)).fetchone()
+                    status_msg = (
+                        'Không tìm thấy lịch trình cho biển số này'
+                        if vehicle else 'Không tìm thấy dữ liệu xe'
+                    )
                 conn.execute("""
                     INSERT INTO rfid_logs
                         (rfid_uid, tx, event_type, status, event_id, driver_code,
