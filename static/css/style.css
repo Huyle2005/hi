@@ -1290,3 +1290,29 @@ body.local-h-screen > main {
     background-position:center right;
   }
 }
+
+
+/* Separate OUT / IN access history columns */
+.history-split-layout{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:20px;align-items:start}
+.history-gate-panel{min-width:0;border:1px solid #dfe9f6;border-radius:16px;background:#f9fbff;overflow:hidden}
+.history-gate-heading{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:18px;border-bottom:1px solid #dce7f6;background:#eef5ff}
+.history-gate-heading h3{margin:0;color:#1c4f93;font-size:17px;font-weight:800}
+.history-gate-heading h3 i{margin-right:8px}
+.history-gate-heading p{margin:6px 0 0;font-size:12px;color:#657994}
+.history-in .history-gate-heading{background:#edf9f4}
+.history-in .history-gate-heading h3{color:#157454}
+.history-count{flex-shrink:0;padding:6px 10px;border-radius:30px;background:#fff;color:#375f93;font-size:12px;font-weight:800}
+.history-gate-list{display:flex;flex-direction:column;gap:12px;padding:14px;max-height:680px;overflow-y:auto}
+.history-event-card{padding:16px;background:#fff;border:1px solid #e0e9f4;border-left:4px solid #3079db;border-radius:12px;box-shadow:0 2px 8px rgba(29,72,115,.04)}
+.history-in .history-event-card{border-left-color:#27a47d}
+.history-event-top{display:flex;justify-content:space-between;gap:10px;align-items:center;margin-bottom:10px;color:#172b49;font-size:15px}
+.history-result{padding:5px 8px;border-radius:20px;font-size:10px;font-weight:800;white-space:nowrap}
+.history-result.is-allowed{background:#e3f7ee;color:#147d50}
+.history-result.is-denied{background:#fff0f0;color:#bd3030}
+.history-event-driver,.history-event-time,.history-event-meta{font-size:12px;color:#4b607c;margin-top:7px;overflow-wrap:anywhere}
+.history-event-driver i,.history-event-time i{margin-right:5px;color:#6483ad}
+.history-event-message{margin-top:10px;padding:9px 10px;background:#f2f6fc;border-radius:8px;color:#405674;font-size:12px;overflow-wrap:anywhere}
+.history-event-actions{margin-top:12px;padding-top:10px;border-top:1px solid #e9eff6;font-size:12px;color:#8795a8}
+.history-event-actions .history-image-open{color:#2168bc;font-weight:700;text-decoration:none}
+.history-empty{padding:22px 12px;text-align:center;color:#75869e;font-size:13px}
+@media(max-width:1050px){.history-split-layout{grid-template-columns:1fr}.history-gate-list{max-height:none}}
