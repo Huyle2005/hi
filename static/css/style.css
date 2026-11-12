@@ -1275,3 +1275,18 @@ body.local-h-screen > main {
  #view-history>div>div:first-child>div{min-width:0}
  #view-history>div>div:first-child button{grid-column:1/-1}
 }
+
+/* IUH campus banner: upload the supplied iuh.jpg to static/images/iuh.jpg */
+.dashboard-page-header{
+  background-color:#fff;
+  background-image:linear-gradient(90deg,#fff 0%,#fff 52%,rgba(255,255,255,.96) 57%,rgba(255,255,255,.14) 79%),url('../images/iuh.jpg');
+  background-repeat:no-repeat;
+  background-size:cover;
+  background-position:center right;
+}
+@media(max-width:700px){
+  .dashboard-page-header{
+    background-image:linear-gradient(90deg,#fff 0%,rgba(255,255,255,.96) 57%,rgba(255,255,255,.55) 100%),url('../images/iuh.jpg');
+    background-position:center right;
+  }
+}
