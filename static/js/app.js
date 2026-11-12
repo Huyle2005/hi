@@ -188,12 +188,19 @@ function renderVehicles(vehicles) {
 }
 
 function renderNotes(notes) {
-    $('notes-container').innerHTML = notes.length ? notes.map((note) => `
-        <div class="local-p-3 local-bg-amber-50 local-border local-border-amber-200 local-rounded-xl local-space-y-1">
-            <div class="local-text-xs local-font-bold local-text-amber-900">${escapeHtml(note.title)}</div>
-            <div class="local-text-11px local-text-amber-800">${escapeHtml(note.content)}</div>
-        </div>`).join('') :
-        '<div class="local-text-xs local-text-slate-400 local-p-3 local-bg-slate-50 local-rounded-lg">Không có ghi chú  nào.</div>';
+    const container = $('notes-container');
+    if (!container) return;
+    container.innerHTML = notes.length ? notes.map((note) => {
+        const isArrival = String(note.content || '').startsWith('Vào bến');
+        const icon = isArrival ? 'fa-arrow-right-to-bracket' : 'fa-arrow-right-from-bracket';
+        return `<div class="gate-note">
+            <div class="gate-note-icon"><i class="fa-solid ${icon}"></i></div>
+            <div class="gate-note-content">
+                <div class="gate-note-title">${escapeHtml(note.title)}</div>
+                <div class="gate-note-detail">${escapeHtml(note.content)}</div>
+            </div>
+        </div>`;
+    }).join('') : '<div class="local-text-xs local-text-slate-500 local-p-4 local-bg-slate-50 local-rounded-lg">Chưa có lượt ra/vào nào được ghi nhận.</div>';
 }
 
 function updateSelectOptions(elementId, items, getLabel) {
