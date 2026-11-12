@@ -1114,3 +1114,31 @@ body.local-h-screen > main {
 .history-image-panel img[hidden], .history-image-message[hidden] { display: none !important; }
 .history-image-message { font-size: 13px; color: #64748b; }
 @media (max-width: 640px) { .history-image-grid { grid-template-columns: 1fr; padding: 12px; } .history-image-panel img { max-height: 38vh; } }
+
+/* Dashboard refinement */
+#view-overview { max-width: 1680px; width: 100%; margin: 0 auto; box-sizing: border-box; }
+#view-overview > .local-grid { gap: 18px; }
+#view-overview > .local-grid:first-child > div { min-height: 108px; border-radius: 18px; border-color: #e5edf7; box-shadow: 0 5px 20px rgba(25,55,95,.055); }
+#view-overview > .local-grid:nth-child(2) > div { border-radius: 18px; border-color: #e5edf7; box-shadow: 0 5px 20px rgba(25,55,95,.055); }
+#view-overview table { border-collapse: collapse; }
+#view-overview thead { background: #f4f7fc; }
+#view-overview th, #view-overview td { padding: 14px 12px; }
+#view-overview tbody tr:hover { background: #f8fbff; }
+#notes-container { max-height: 520px; overflow-y: auto; scrollbar-width: thin; }
+#notes-container .gate-note { display: flex; gap: 12px; padding: 14px; border: 1px solid #e3ebf5; border-left: 3px solid #3975c7; border-radius: 12px; background: #f7faff; }
+#notes-container .gate-note-icon { width: 36px; height: 36px; flex: 0 0 36px; display: grid; place-items: center; border-radius: 10px; background: #e5efff; color: #2865b2; }
+#notes-container .gate-note-content { min-width: 0; flex: 1; }
+#notes-container .gate-note-title { font-size: 13px; font-weight: 700; color: #1b3355; overflow-wrap: anywhere; }
+#notes-container .gate-note-detail { margin-top: 5px; font-size: 12px; color: #526782; }
+@media (max-width: 1050px) {
+  #view-overview > .local-grid:nth-child(2) { display: flex; flex-direction: column; }
+  #view-overview > .local-grid:nth-child(2) > div { width: 100%; }
+}
+@media (max-width: 700px) {
+  #view-overview { padding: 14px; }
+  #view-overview > .local-grid:first-child { display: grid; grid-template-columns: repeat(2, minmax(0,1fr)); gap: 10px; }
+  #view-overview > .local-grid:first-child > div { min-width: 0; min-height: 95px; padding: 12px; }
+  #view-overview > .local-grid:first-child > div:last-child { grid-column: 1 / -1; }
+  #view-overview > .local-grid:nth-child(2) > div { padding: 14px; }
+  #view-overview table { min-width: 680px; }
+}
