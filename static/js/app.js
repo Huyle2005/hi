@@ -253,54 +253,54 @@ async function loadData() {
 
 let historyImageRecords = new Map();
 
+function renderGateHistory(items, gate) {
+    const target = $('history-' + gate.toLowerCase() + '-list');
+    const counter = $('history-' + gate.toLowerCase() + '-count');
+    if (!target) return;
+    const filtered = items.filter(item => String(item.event_type || item.gate || '').toUpperCase() === gate);
+    if (counter) counter.textContent = filtered.length + ' lượt';
+    target.innerHTML = filtered.map(item => {
+        const allowed = item.decision === 'ALLOW' || item.status === 'SUCCESS';
+        const time = item.scan_time ? new Date(item.scan_time).toLocaleString('vi-VN') : '---';
+        const hasImage = item.face_image_url || item.plate_image_url;
+        return `<article class="history-event-card">
+            <div class="history-event-top"><strong>${escapeHtml(item.plate || 'Chưa có biển số')}</strong>
+                <span class="history-result ${allowed ? 'is-allowed' : 'is-denied'}">${allowed ? 'CHO PHÉP' : 'TỪ CHỐI'}</span></div>
+            <div class="history-event-driver"><i class="fa-solid fa-user"></i> ${escapeHtml(item.driver_name || item.driver_code || 'Không nhận diện')}</div>
+            <div class="history-event-time"><i class="fa-regular fa-clock"></i> ${escapeHtml(time)}</div>
+            <div class="history-event-meta">RFID: ${escapeHtml(item.rfid_uid || '---')} · TX: ${escapeHtml(item.tx || '---')}</div>
+            ${item.message ? `<div class="history-event-message">${escapeHtml(item.message)}</div>` : ''}
+            <div class="history-event-actions">${hasImage ? `<button type="button" class="history-image-open" data-history-id="${Number(item.id)}"><i class="fa-regular fa-images"></i> Xem ảnh khuôn mặt / biển số</button>` : '<span>Không có ảnh</span>'}</div>
+        </article>`;
+    }).join('') || '<p class="history-empty">Không có lượt ' + (gate === 'OUT' ? 'xe ra' : 'xe vào') + ' phù hợp.</p>';
+}
+
 async function loadAccessHistory() {
-    const tbody = $('access-history-list');
-    if (!tbody) return;
+    const outbound = $('history-out-list');
+    const inbound = $('history-in-list');
+    if (!outbound || !inbound) return;
+    outbound.innerHTML = inbound.innerHTML = '<p class="history-empty">Đang tải lịch sử...</p>';
     historyImageRecords.clear();
-    tbody.innerHTML = '<tr><td colspan="8" class="local-p-4 local-text-center">Đang tải lịch sử...</td></tr>';
     const params = new URLSearchParams({limit: '100'});
     const from = $('history-from')?.value || '';
     const to = $('history-to')?.value || '';
-    const gate = $('history-gate')?.value || '';
     const decision = $('history-decision')?.value || '';
     if (from) params.set('from', from);
     if (to) params.set('to', to);
-    if (gate) params.set('gate', gate);
     if (decision) params.set('decision', decision);
     try {
         const data = await requestJson('/api/access-history?' + params.toString());
-        if (!data.items?.length) {
-            tbody.innerHTML = '<tr><td colspan="8" class="local-p-4 local-text-center local-text-slate-400">Chưa có dữ liệu phù hợp.</td></tr>';
-            return;
-        }
-        tbody.innerHTML = data.items.map((item) => {
-            const allowed = item.decision === 'ALLOW' || item.status === 'SUCCESS';
-            const gateLabel = item.event_type === 'OUT' ? 'Xuất bến' : item.event_type === 'IN' ? 'Về bãi' : 'Không rõ';
-            const time = item.scan_time ? new Date(item.scan_time).toLocaleString('vi-VN') : '---';
-            const images = item.face_image_url || item.plate_image_url
-                ? '<button type="button" class="history-image-open" data-history-id="' + Number(item.id) + '">Xem ảnh</button>'
-                : '<span class="local-text-slate-400">Không có</span>';
-            return `<tr>
-                <td class="local-p-2">${escapeHtml(time)}</td>
-                <td class="local-p-2">${escapeHtml(item.driver_name || item.driver_code || 'Không nhận diện')}</td>
-                <td class="local-p-2 local-font-semibold">${escapeHtml(item.plate || '---')}</td>
-                <td class="local-p-2">${gateLabel}</td>
-                <td class="local-p-2">${escapeHtml(item.rfid_uid || '---')} / ${escapeHtml(item.tx || '---')}</td>
-                <td class="local-p-2"><span class="${allowed ? 'local-text-emerald-700' : 'local-text-red-600'} local-font-bold">${allowed ? 'CHO PHÉP' : 'TỪ CHỐI'}</span><div>${escapeHtml(item.status || '')}</div></td>
-                <td class="local-p-2">${images}</td>
-                <td class="local-p-2">${escapeHtml(item.message || '')}<div class="local-text-slate-400">${escapeHtml(item.plate_source || '')}</div></td>
-            </tr>`;
-        }).join('');
-        // Store only URLs from the current rendered page; no inline JS with untrusted data.
-        historyImageRecords = new Map(data.items.map(item => [Number(item.id), {
+        const items = data.items || [];
+        historyImageRecords = new Map(items.map(item => [Number(item.id), {
             face: item.face_image_url || null,
             plate: item.plate_image_url || null
         }]));
+        renderGateHistory(items, 'OUT');
+        renderGateHistory(items, 'IN');
     } catch (error) {
-        tbody.innerHTML = '<tr><td colspan="8" class="local-p-4 local-text-center local-text-red-600">' + escapeHtml(error.message) + '</td></tr>';
+        outbound.innerHTML = inbound.innerHTML = '<p class="history-empty">' + escapeHtml(error.message) + '</p>';
     }
 }
-
 
 function showHistoryImages(faceUrl, plateUrl) {
     const modal = $('history-image-modal');
