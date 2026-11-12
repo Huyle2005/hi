@@ -145,15 +145,26 @@ function resetCapture() {
     badge.textContent = 'Chưa quét khuôn mặt (Cần quét 3 góc)';
 }
 
+function renderOverviewSchedules() {
+    const query = ($('overview-search')?.value || '').trim().toLocaleLowerCase('vi-VN');
+    const rows = (window.overviewSchedules || []).filter(s =>
+        [s.driver_name, s.vehicle_plate, s.status].some(value =>
+            String(value || '').toLocaleLowerCase('vi-VN').includes(query)));
+    const target = $('overview-schedules-list');
+    if (!target) return;
+    target.innerHTML = rows.slice(0, 10).map(s => `
+        <tr>
+            <td><i class="fa-solid fa-circle-user local-text-blue-600"></i> <strong>${escapeHtml(s.driver_name)}</strong></td>
+            <td><span class="local-font-bold local-text-blue-600">${escapeHtml(s.vehicle_plate)}</span></td>
+            <td>${escapeHtml(s.departure_time || '---')} ${s.actual_dep_time ? `<strong class="local-text-emerald-600">(${escapeHtml(s.actual_dep_time)})</strong>` : ''}</td>
+            <td>${escapeHtml(s.return_time || '---')} ${s.actual_ret_time ? `<strong class="local-text-emerald-600">(${escapeHtml(s.actual_ret_time)})</strong>` : ''}</td>
+            <td><span class="local-text-blue-700 local-font-semibold">${escapeHtml(s.status)}</span></td>
+        </tr>`).join('') || '<tr><td colspan="5">Không tìm thấy lịch trình.</td></tr>';
+    if ($('overview-count')) $('overview-count').textContent = `Hiển thị ${Math.min(rows.length,10)} / ${rows.length} lịch trình`;
+}
 function renderSchedules(schedules) {
-    $('overview-schedules-list').innerHTML = schedules.slice(0, 5).map((s) => `
-        <tr class="local-hover-bg-slate-50">
-            <td class="local-py-3 local-font-bold local-text-slate-800">${escapeHtml(s.driver_name)}</td>
-            <td class="local-py-3 local-font-semibold local-text-blue-600">${escapeHtml(s.vehicle_plate)}</td>
-            <td class="local-py-3 local-text-slate-600">${escapeHtml(s.departure_time)} ${s.actual_dep_time ? `<span class="local-font-bold local-text-emerald-600">(${escapeHtml(s.actual_dep_time)})</span>` : ''}</td>
-            <td class="local-py-3 local-text-slate-600">${escapeHtml(s.return_time || '---')} ${s.actual_ret_time ? `<span class="local-font-bold local-text-emerald-600">(${escapeHtml(s.actual_ret_time)})</span>` : ''}</td>
-            <td class="local-py-3"><span class="local-px-2 local-py-0-5 local-rounded-full local-text-10px local-font-bold local-bg-blue-100 local-text-blue-800">${escapeHtml(s.status)}</span></td>
-        </tr>`).join('');
+    window.overviewSchedules = schedules;
+    renderOverviewSchedules();
     $('full-schedules-list').innerHTML = schedules.map((s) => `
         <tr>
             <td class="local-py-3 local-font-bold">${escapeHtml(s.driver_name)}</td>
@@ -431,3 +442,5 @@ async function deleteRecord(url, label, refreshDropdowns = false) {
 function deleteDriver(id) { return deleteRecord(`/api/drivers/${Number(id)}`, 'tài xế', true); }
 function deleteVehicle(id) { return deleteRecord(`/api/vehicles/${Number(id)}`, 'xe', true); }
 function deleteSchedule(id) { return deleteRecord(`/api/schedules/${Number(id)}`, 'lịch trình'); }
+
+$('overview-search')?.addEventListener('input', renderOverviewSchedules);
