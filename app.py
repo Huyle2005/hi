@@ -215,28 +215,32 @@ def get_dashboard_data():
             """
         ).fetchall()]
 
-    # Ghi chú giờ ra/vào thực tế do Pi ghi nhận, không đánh giá trễ giờ.
+    # Dòng thời gian sự kiện thực tế, không phụ thuộc thứ tự lịch trình.
     notes = []
     for schedule in schedules:
         driver_title = (
             f"Tài xế: {schedule['driver_name']} "
             f"({schedule['vehicle_plate']})"
         )
-        departure = str(schedule.get('actual_dep_time') or '').strip()
-        arrival = str(schedule.get('actual_ret_time') or '').strip()
+        for field, label in (
+            ('actual_dep_time', 'Ra bến'),
+            ('actual_ret_time', 'Vào bến'),
+        ):
+            actual_time = str(schedule.get(field) or '').strip()
+            if actual_time:
+                notes.append({
+                    "type": "info",
+                    "title": driver_title,
+                    "content": f"{label} lúc {actual_time}",
+                    "_sort_time": actual_time,
+                    "_sort_id": schedule['id'],
+                })
 
-        if arrival:
-            notes.append({
-                "type": "info",
-                "title": driver_title,
-                "content": f"Vào bến lúc {arrival}"
-            })
-        if departure:
-            notes.append({
-                "type": "info",
-                "title": driver_title,
-                "content": f"Ra bến lúc {departure}"
-            })
+    # Thời gian lưu dạng ISO hoặc HH:MM[:SS]; lịch trình cùng ngày.
+    notes.sort(key=lambda n: (n['_sort_time'], n['_sort_id']), reverse=True)
+    for note in notes:
+        note.pop('_sort_time')
+        note.pop('_sort_id')
 
     return jsonify({
         "drivers": drivers,
