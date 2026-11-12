@@ -1187,3 +1187,91 @@ body.local-h-screen > main {
 .dashboard-note-list .gate-note-detail{font-size:12px;color:#465d7a}
 @media(max-width:1250px){.dashboard-layout{grid-template-columns:minmax(0,1fr)}.dashboard-notifications{min-height:0}.dashboard-kpi{padding:14px}.dashboard-kpi-icon{width:52px;height:52px;flex-basis:52px}}
 @media(max-width:760px){.dashboard-page-header{min-height:90px;padding:16px}.dashboard-view{padding:14px}.dashboard-kpis{grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}.dashboard-kpi:last-child{grid-column:1/-1}.dashboard-kpi{min-height:94px}.dashboard-panel-heading{align-items:flex-start;flex-direction:column}.dashboard-panel-actions{width:100%;justify-content:space-between}.dashboard-search{flex:1}.dashboard-search input{width:100%}.dashboard-schedules,.dashboard-notifications{padding:15px}.dashboard-notification-heading h2{font-size:17px}}
+
+
+/* Unified management pages — same visual language as Overview */
+:is(#view-schedules,#view-drivers,#view-vehicles,#view-history){
+ width:100%;box-sizing:border-box;background:#eef4ff;min-height:100%;padding:24px 28px 36px;
+}
+:is(#view-schedules,#view-drivers,#view-vehicles,#view-history)>div{
+ background:#fff;border:1px solid #e2eaf5;border-radius:18px;
+ box-shadow:0 5px 22px rgba(28,70,113,.055);padding:24px;
+ margin-bottom:20px;min-width:0;
+}
+:is(#view-schedules,#view-drivers,#view-vehicles,#view-history) h2{
+ font-size:18px;font-weight:800;line-height:1.5;color:#172644;
+ border-left:5px solid #2378e8;padding-left:13px;margin-bottom:20px;
+}
+:is(#view-schedules,#view-drivers,#view-vehicles,#view-history) form{
+ gap:16px;align-items:end;
+}
+:is(#view-schedules,#view-drivers,#view-vehicles,#view-history) label{
+ color:#405575;font-size:12px;font-weight:700;margin-bottom:7px;
+}
+:is(#view-schedules,#view-drivers,#view-vehicles,#view-history) :is(input,select,textarea){
+ box-sizing:border-box;max-width:100%;min-height:42px;
+ background:#fbfdff;border:1px solid #d9e4f2;border-radius:10px;
+ color:#203652;padding:10px 12px;font-size:13px;outline:none;
+}
+:is(#view-schedules,#view-drivers,#view-vehicles,#view-history) :is(input,select,textarea):focus{
+ border-color:#3b82d9;box-shadow:0 0 0 3px rgba(59,130,246,.11);
+}
+:is(#view-schedules,#view-drivers,#view-vehicles,#view-history) button[type=submit],
+#view-history button[onclick="loadAccessHistory()"]{
+ min-height:42px;padding:10px 18px;border:0;border-radius:10px;
+ background:linear-gradient(135deg,#3487e7,#1959b2);color:#fff;
+ font-size:12px;font-weight:800;cursor:pointer;
+ box-shadow:0 3px 9px rgba(30,98,180,.14);
+}
+#view-drivers button[onclick="openCameraModal()"]{
+ min-height:42px;background:#eaf2ff;color:#195eac;border:1px solid #c4dcf7;
+ border-radius:10px;font-weight:700;cursor:pointer;
+}
+:is(#view-schedules,#view-drivers,#view-vehicles,#view-history) table{
+ width:100%;border-collapse:separate;border-spacing:0;min-width:620px;
+ font-size:12px;text-align:left;
+}
+:is(#view-schedules,#view-drivers,#view-vehicles,#view-history) thead{
+ background:#f0f5ff;
+}
+:is(#view-schedules,#view-drivers,#view-vehicles,#view-history) th{
+ color:#344a6a;font-size:11px;font-weight:800;letter-spacing:.025em;
+ padding:15px 12px;white-space:nowrap;border-bottom:1px solid #dfe9f6;
+}
+:is(#view-schedules,#view-drivers,#view-vehicles,#view-history) td{
+ padding:14px 12px;color:#26384d;border-bottom:1px solid #e8eef7;
+ vertical-align:middle;
+}
+:is(#view-schedules,#view-drivers,#view-vehicles,#view-history) tbody tr:hover{
+ background:#f8fbff;
+}
+:is(#view-schedules,#view-drivers,#view-vehicles,#view-history) .btn-link{
+ min-height:0;padding:3px 6px;border:0;background:transparent;
+ color:#d33d4e;font-weight:700;box-shadow:none;
+}
+#view-schedules>div:nth-child(2),
+#view-drivers>div:nth-child(2),
+#view-vehicles>div:nth-child(2){overflow-x:auto}
+#view-history>div>div.local-overflow-x-auto{overflow-x:auto}
+#view-history table{min-width:860px}
+#view-vehicles table{min-width:460px}
+#view-drivers table{min-width:620px}
+#view-schedules table{min-width:950px}
+#view-history>div>div:first-child{gap:14px;margin-bottom:22px}
+#view-history>div>div:first-child>div{min-width:135px}
+@media(max-width:1050px){
+ #add-schedule-form{grid-template-columns:repeat(2,minmax(0,1fr))}
+ #add-driver-form{grid-template-columns:repeat(2,minmax(0,1fr))}
+ #add-driver-form>.local-col-span-4{grid-column:1/-1}
+}
+@media(max-width:700px){
+ :is(#view-schedules,#view-drivers,#view-vehicles,#view-history){padding:14px}
+ :is(#view-schedules,#view-drivers,#view-vehicles,#view-history)>div{padding:16px;margin-bottom:14px}
+ :is(#view-schedules,#view-drivers,#view-vehicles,#view-history) h2{font-size:16px}
+ #add-schedule-form,#add-driver-form,#add-vehicle-form{display:grid;grid-template-columns:1fr}
+ #add-driver-form>.local-col-span-4{grid-column:1;display:flex;flex-wrap:wrap;gap:10px}
+ #view-drivers>div:first-child>div:first-child{flex-wrap:wrap;gap:12px}
+ #view-history>div>div:first-child{display:grid;grid-template-columns:repeat(2,minmax(0,1fr))}
+ #view-history>div>div:first-child>div{min-width:0}
+ #view-history>div>div:first-child button{grid-column:1/-1}
+}
