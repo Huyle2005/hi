@@ -167,6 +167,12 @@ function actualTimeHtml(planned, actual) {
     return `<strong class="actual-time ${timing?.className || ''}" title="${escapeHtml(timing?.label || '')}">(${escapeHtml(actual)})</strong>`;
 }
 
+function actualTimeCell(planned, actual) {
+    if (!actual) return '---';
+    const timing = scheduleTiming(planned, actual);
+    return `<span class="${timing?.className || ''}" title="${escapeHtml(timing?.label || '')}">${escapeHtml(actual)}</span>`;
+}
+
 function renderOverviewSchedules() {
     const query = ($('overview-search')?.value || '').trim().toLocaleLowerCase('vi-VN');
     const rows = (window.overviewSchedules || []).filter(s =>
@@ -192,9 +198,9 @@ function renderSchedules(schedules) {
             <td class="local-py-3 local-font-bold">${escapeHtml(s.driver_name)}</td>
             <td class="local-py-3 local-font-semibold local-text-blue-600">${escapeHtml(s.vehicle_plate)}</td>
             <td class="local-py-3">${escapeHtml(s.departure_time)}</td>
-            <td class="local-py-3 local-font-bold ${s.actual_dep_time && s.actual_dep_time > s.departure_time ? 'local-text-red-600' : 'local-text-emerald-600'}">${escapeHtml(s.actual_dep_time || '---')}</td>
+            <td class="local-py-3 local-font-bold">${actualTimeCell(s.departure_time, s.actual_dep_time)}</td>
             <td class="local-py-3">${escapeHtml(s.return_time || '---')}</td>
-            <td class="local-py-3 local-font-bold ${s.actual_ret_time && s.return_time && s.actual_ret_time > s.return_time ? 'local-text-red-600' : 'local-text-emerald-600'}">${escapeHtml(s.actual_ret_time || '---')}</td>
+            <td class="local-py-3 local-font-bold">${actualTimeCell(s.return_time, s.actual_ret_time)}</td>
             <td class="local-py-3"><span class="local-px-2 local-py-0-5 local-rounded-full local-text-11px local-font-semibold local-bg-blue-100 local-text-blue-800">${escapeHtml(s.status)}</span></td>
             <td class="local-py-3 local-text-right"><button type="button" class="btn-link" onclick="deleteSchedule(${Number(s.id)})">Xóa</button></td>
         </tr>`).join('');
