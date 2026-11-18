@@ -232,6 +232,10 @@ def get_dashboard_data():
                     "type": "info",
                     "title": driver_title,
                     "content": f"{label} lúc {actual_time}",
+                    "actual_time": actual_time,
+                    "planned_time": schedule.get(
+                        'departure_time' if field == 'actual_dep_time' else 'return_time'
+                    ),
                     "_sort_time": actual_time,
                     "_sort_id": schedule['id'],
                 })
