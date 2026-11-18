@@ -1327,3 +1327,12 @@ body.local-h-screen > main {
 .dashboard-note-list .gate-note-icon{width:42px;height:42px;flex:0 0 42px;border-radius:11px;background:#e6f0ff;color:#2365ae;font-size:18px}
 .dashboard-note-list .gate-note-title{font-size:13px;font-weight:800}
 .dashboard-note-list .gate-note-detail{margin-top:7px;line-height:1.5}
+
+
+/* Detailed schedule table: punctuality color matching overview */
+#view-schedules #full-schedules-list .timing-late{
+ color:#c62838 !important;font-weight:800;
+}
+#view-schedules #full-schedules-list .timing-ok{
+ color:#16834e !important;font-weight:800;
+}
