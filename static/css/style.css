@@ -1316,3 +1316,14 @@ body.local-h-screen > main {
 .history-event-actions .history-image-open{color:#2168bc;font-weight:700;text-decoration:none}
 .history-empty{padding:22px 12px;text-align:center;color:#75869e;font-size:13px}
 @media(max-width:1050px){.history-split-layout{grid-template-columns:1fr}.history-gate-list{max-height:none}}
+
+
+/* Punctuality: late in red; on-time/early in green */
+#view-overview .actual-time{font-weight:800;white-space:nowrap}
+#view-overview .timing-late,.gate-timing.timing-late{color:#c62838!important}
+#view-overview .timing-ok,.gate-timing.timing-ok{color:#16834e!important}
+.gate-timing{display:inline-block;margin-left:6px;font-size:12px;font-weight:800}
+.dashboard-note-list .gate-note{align-items:center}
+.dashboard-note-list .gate-note-icon{width:42px;height:42px;flex:0 0 42px;border-radius:11px;background:#e6f0ff;color:#2365ae;font-size:18px}
+.dashboard-note-list .gate-note-title{font-size:13px;font-weight:800}
+.dashboard-note-list .gate-note-detail{margin-top:7px;line-height:1.5}
