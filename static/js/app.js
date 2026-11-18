@@ -145,6 +145,28 @@ function resetCapture() {
     badge.textContent = 'Chưa quét khuôn mặt (Cần quét 3 góc)';
 }
 
+function scheduleTiming(planned, actual) {
+    if (!planned || !actual) return null;
+    const match = String(planned).match(/(\d{1,2}):(\d{2})/);
+    const actualMatch = String(actual).match(/^(\d{1,2}):(\d{2})/);
+    if (!match || !actualMatch) return null;
+    const plannedMinutes = Number(match[1]) * 60 + Number(match[2]);
+    const actualMinutes = Number(actualMatch[1]) * 60 + Number(actualMatch[2]);
+    // Lịch trình chạy trong cùng một ngày, so sánh theo phút.
+    const difference = actualMinutes - plannedMinutes;
+    return {
+        difference,
+        className: difference > 0 ? 'timing-late' : 'timing-ok',
+        label: difference > 0 ? 'Trễ ' + difference + ' phút'
+            : difference < 0 ? 'Sớm ' + Math.abs(difference) + ' phút' : 'Đúng giờ'
+    };
+}
+function actualTimeHtml(planned, actual) {
+    if (!actual) return '';
+    const timing = scheduleTiming(planned, actual);
+    return `<strong class="actual-time ${timing?.className || ''}" title="${escapeHtml(timing?.label || '')}">(${escapeHtml(actual)})</strong>`;
+}
+
 function renderOverviewSchedules() {
     const query = ($('overview-search')?.value || '').trim().toLocaleLowerCase('vi-VN');
     const rows = (window.overviewSchedules || []).filter(s =>
@@ -156,8 +178,8 @@ function renderOverviewSchedules() {
         <tr>
             <td><i class="fa-solid fa-circle-user local-text-blue-600"></i> <strong>${escapeHtml(s.driver_name)}</strong></td>
             <td><span class="local-font-bold local-text-blue-600">${escapeHtml(s.vehicle_plate)}</span></td>
-            <td>${escapeHtml(s.departure_time || '---')} ${s.actual_dep_time ? `<strong class="local-text-emerald-600">(${escapeHtml(s.actual_dep_time)})</strong>` : ''}</td>
-            <td>${escapeHtml(s.return_time || '---')} ${s.actual_ret_time ? `<strong class="local-text-emerald-600">(${escapeHtml(s.actual_ret_time)})</strong>` : ''}</td>
+            <td>${escapeHtml(s.departure_time || '---')} ${actualTimeHtml(s.departure_time, s.actual_dep_time)}</td>
+            <td>${escapeHtml(s.return_time || '---')} ${actualTimeHtml(s.return_time, s.actual_ret_time)}</td>
             <td><span class="local-text-blue-700 local-font-semibold">${escapeHtml(s.status)}</span></td>
         </tr>`).join('') || '<tr><td colspan="5">Không tìm thấy lịch trình.</td></tr>';
     if ($('overview-count')) $('overview-count').textContent = `Hiển thị ${Math.min(rows.length,10)} / ${rows.length} lịch trình`;
@@ -204,11 +226,15 @@ function renderNotes(notes) {
     container.innerHTML = notes.length ? notes.map((note) => {
         const isArrival = String(note.content || '').startsWith('Vào bến');
         const icon = isArrival ? 'fa-arrow-right-to-bracket' : 'fa-arrow-right-from-bracket';
+        const timing = scheduleTiming(note.planned_time, note.actual_time);
+        const timingHtml = timing
+            ? `<span class="gate-timing ${timing.className}">(${escapeHtml(timing.label)})</span>`
+            : '';
         return `<div class="gate-note">
             <div class="gate-note-icon"><i class="fa-solid ${icon}"></i></div>
             <div class="gate-note-content">
                 <div class="gate-note-title">${escapeHtml(note.title)}</div>
-                <div class="gate-note-detail">${escapeHtml(note.content)}</div>
+                <div class="gate-note-detail">${escapeHtml(note.content)} ${timingHtml}</div>
             </div>
         </div>`;
     }).join('') : '<div class="local-text-xs local-text-slate-500 local-p-4 local-bg-slate-50 local-rounded-lg">Chưa có lượt ra/vào nào được ghi nhận.</div>';
