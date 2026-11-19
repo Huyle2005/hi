@@ -309,9 +309,24 @@ function renderGateHistory(items, gate) {
             <div class="history-event-time"><i class="fa-regular fa-clock"></i> ${escapeHtml(time)}</div>
             <div class="history-event-meta">RFID: ${escapeHtml(item.rfid_uid || '---')} · TX: ${escapeHtml(item.tx || '---')}</div>
             ${item.message ? `<div class="history-event-message">${escapeHtml(item.message)}</div>` : ''}
-            <div class="history-event-actions">${hasImage ? `<button type="button" class="history-image-open" data-history-id="${Number(item.id)}"><i class="fa-regular fa-images"></i> Xem ảnh khuôn mặt / biển số</button>` : '<span>Không có ảnh</span>'}</div>
+            <div class="history-event-actions">
+                ${hasImage ? `<button type="button" class="history-image-open" data-history-id="${Number(item.id)}"><i class="fa-regular fa-images"></i> Xem ảnh khuôn mặt / biển số</button>` : '<span>Không có ảnh</span>'}
+                <button type="button" class="history-delete-button" onclick="deleteAccessHistory(${Number(item.id)})"><i class="fa-regular fa-trash-can"></i> Xóa</button>
+            </div>
         </article>`;
     }).join('') || '<p class="history-empty">Không có lượt ' + (gate === 'OUT' ? 'xe ra' : 'xe vào') + ' phù hợp.</p>';
+}
+
+async function deleteAccessHistory(id) {
+    if (!Number.isSafeInteger(id) || id <= 0) return;
+    if (!confirm('Bạn có chắc muốn xóa lượt ra/vào này? Bản ghi lịch sử sẽ bị xóa khỏi Neon, ảnh Cloudinary vẫn được giữ lại.')) return;
+    try {
+        await requestJson('/api/access-history/' + id, { method: 'DELETE' });
+        lastHistorySignature = null;
+        await loadAccessHistory();
+    } catch (error) {
+        showError(error, 'Không thể xóa lịch sử ra/vào.');
+    }
 }
 
 async function loadAccessHistory() {
