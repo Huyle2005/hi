@@ -851,6 +851,35 @@ def list_access_history():
         return jsonify({"success": False, "message": "Không thể tải lịch sử ra/vào"}), 500
 
 
+@app.route('/api/access-history/<int:log_id>', methods=['DELETE'])
+def delete_access_history(log_id):
+    denied = require_admin()
+    if denied:
+        return denied
+    try:
+        with get_db() as conn:
+            deleted = conn.execute(
+                "DELETE FROM rfid_logs WHERE id = %s RETURNING id",
+                (log_id,)
+            ).fetchone()
+        if not deleted:
+            return jsonify({
+                "success": False,
+                "message": "Không tìm thấy lịch sử ra/vào"
+            }), 404
+        # Giữ ảnh gốc Cloudinary làm bằng chứng, chỉ xóa bản ghi Neon.
+        return jsonify({
+            "success": True,
+            "message": "Đã xóa lịch sử ra/vào"
+        })
+    except Exception:
+        app.logger.exception("Lỗi xóa lịch sử ra/vào")
+        return jsonify({
+            "success": False,
+            "message": "Không thể xóa lịch sử ra/vào"
+        }), 500
+
+
 @app.route('/api/access-history/<int:log_id>/image/<kind>', methods=['GET'])
 def access_history_image(log_id, kind):
     denied = require_admin()
