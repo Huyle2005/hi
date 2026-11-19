@@ -1336,3 +1336,12 @@ body.local-h-screen > main {
 #view-schedules #full-schedules-list .timing-ok{
  color:#16834e !important;font-weight:800;
 }
+
+
+/* Access-history deletion action */
+.history-event-actions{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}
+.history-event-actions .history-delete-button{
+ border:1px solid #f3c5cb;border-radius:8px;background:#fff5f5;
+ color:#bd3041;padding:7px 11px;font-size:12px;font-weight:700;cursor:pointer;
+}
+.history-event-actions .history-delete-button:hover{background:#ffe6e9;border-color:#e99ca7}
