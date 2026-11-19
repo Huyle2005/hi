@@ -66,6 +66,12 @@
             background: #f8fafc;
         }
 
+
+        /* Thời gian thực tế: trễ đỏ, sớm/đúng giờ xanh */
+        .driver-time-late { color: #dc2626; font-weight: 800; }
+        .driver-time-ok { color: #15803d; font-weight: 800; }
+        .driver-time-note { display: block; margin-top: 4px; font-size: 11px; font-weight: 600; }
+
         /* Đồng bộ màu thanh đầu trang với thanh điều hướng IUH */
         .driver-header {
             background: linear-gradient(100deg, #416b9f, #245477);
@@ -288,6 +294,30 @@
             return 'status-other';
         }
 
+        function timingInfo(planned, actual) {
+            if (!planned || !actual) return null;
+            const plannedMatch = String(planned).match(/(\d{1,2}):(\d{2})(?::\d{2})?\s*$/);
+            const actualMatch = String(actual).match(/(\d{1,2}):(\d{2})(?::\d{2})?\s*$/);
+            if (!plannedMatch || !actualMatch) return null;
+            const expected = Number(plannedMatch[1]) * 60 + Number(plannedMatch[2]);
+            const observed = Number(actualMatch[1]) * 60 + Number(actualMatch[2]);
+            const difference = observed - expected;
+            return {
+                css: difference > 0 ? 'driver-time-late' : 'driver-time-ok',
+                label: difference > 0 ? 'Trễ ' + difference + ' phút'
+                    : difference < 0 ? 'Sớm ' + Math.abs(difference) + ' phút'
+                    : 'Đúng giờ'
+            };
+        }
+
+        function actualTimeDisplay(planned, actual) {
+            if (!actual) return '—';
+            const timing = timingInfo(planned, actual);
+            if (!timing) return formatDate(actual);
+            return '<span class="' + timing.css + '">' + formatDate(actual) +
+                '<span class="driver-time-note">(' + escapeHTML(timing.label) + ')</span></span>';
+        }
+
         function renderSchedules() {
             const keyword = normalize(
                 document.getElementById('search-input').value
@@ -335,8 +365,8 @@
                     <td>${escapeHTML(item.vehicle_type || '—')}</td>
                     <td>${formatDate(item.departure_time)}</td>
                     <td>${formatDate(item.return_time)}</td>
-                    <td>${formatDate(item.actual_dep_time)}</td>
-                    <td>${formatDate(item.actual_ret_time)}</td>
+                    <td>${actualTimeDisplay(item.departure_time, item.actual_dep_time)}</td>
+                    <td>${actualTimeDisplay(item.return_time, item.actual_ret_time)}</td>
                     <td>
                         <span class="status ${statusClass(item.status)}">
                             ${escapeHTML(item.status || 'Chưa xác định')}
