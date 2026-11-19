@@ -7,6 +7,9 @@ let mediaStream = null;
 let isDropdownPopulated = false;
 let isLoading = false;
 let refreshTimer = null;
+let historyLoading = false;
+let lastHistorySignature = null;
+let lastDashboardSignature = null;
 
 const $ = (id) => document.getElementById(id);
 
@@ -57,7 +60,8 @@ function switchTab(tab) {
         history: 'Lịch sử ra/vào'
     };
     if ($('page-title')) $('page-title').textContent = titles[tab];
-    if (tab === 'history') loadAccessHistory();
+    if (tab === 'history') { lastHistorySignature = null; loadAccessHistory(); }
+    else loadData();
 }
 
 async function openCameraModal() {
@@ -255,23 +259,26 @@ function updateSelectOptions(elementId, items, getLabel) {
 }
 
 async function loadData() {
-    if (isLoading) return;
+    if (isLoading || document.hidden) return;
     isLoading = true;
     try {
-        const data = await requestJson('/api/dashboard');
-        $('kpi-vehicles').textContent = data.kpi.total_vehicles ?? 0;
-        $('kpi-schedules').textContent = data.kpi.active_schedules ?? 0;
-        $('kpi-completed').textContent = data.kpi.completed_schedules ?? 0;
-        renderNotes(data.notes || []);
-        renderSchedules(data.schedules || []);
-        renderDrivers(data.drivers || []);
-        renderVehicles(data.vehicles || []);
-
+        const data = await requestJson('/api/dashboard', { cache: 'no-store' });
+        const signature = JSON.stringify(data);
+        if (signature !== lastDashboardSignature) {
+            $('kpi-vehicles').textContent = data.kpi.total_vehicles ?? 0;
+            $('kpi-schedules').textContent = data.kpi.active_schedules ?? 0;
+            $('kpi-completed').textContent = data.kpi.completed_schedules ?? 0;
+            renderNotes(data.notes || []);
+            renderSchedules(data.schedules || []);
+            renderDrivers(data.drivers || []);
+            renderVehicles(data.vehicles || []);
+            lastDashboardSignature = signature;
+        }
         if (!isDropdownPopulated) {
             updateSelectOptions('schedule-driver-id', data.drivers || [],
-                (driver) => `${driver.name} (${driver.code})`);
+                driver => `${driver.name} (${driver.code})`);
             updateSelectOptions('schedule-vehicle-id', data.vehicles || [],
-                (vehicle) => `${vehicle.plate} - ${vehicle.vehicle_type}`);
+                vehicle => `${vehicle.plate} - ${vehicle.vehicle_type}`);
             isDropdownPopulated = true;
         }
     } catch (error) {
@@ -310,9 +317,11 @@ function renderGateHistory(items, gate) {
 async function loadAccessHistory() {
     const outbound = $('history-out-list');
     const inbound = $('history-in-list');
-    if (!outbound || !inbound) return;
-    outbound.innerHTML = inbound.innerHTML = '<p class="history-empty">Đang tải lịch sử...</p>';
-    historyImageRecords.clear();
+    if (!outbound || !inbound || historyLoading) return;
+    historyLoading = true;
+    if (lastHistorySignature === null) {
+        outbound.innerHTML = inbound.innerHTML = '<p class="history-empty">Đang tải lịch sử...</p>';
+    }
     const params = new URLSearchParams({limit: '100'});
     const from = $('history-from')?.value || '';
     const to = $('history-to')?.value || '';
@@ -323,6 +332,9 @@ async function loadAccessHistory() {
     try {
         const data = await requestJson('/api/access-history?' + params.toString());
         const items = data.items || [];
+        const signature = JSON.stringify(items);
+        if (signature === lastHistorySignature) return;
+        lastHistorySignature = signature;
         historyImageRecords = new Map(items.map(item => [Number(item.id), {
             face: item.face_image_url || null,
             plate: item.plate_image_url || null
@@ -330,7 +342,11 @@ async function loadAccessHistory() {
         renderGateHistory(items, 'OUT');
         renderGateHistory(items, 'IN');
     } catch (error) {
-        outbound.innerHTML = inbound.innerHTML = '<p class="history-empty">' + escapeHtml(error.message) + '</p>';
+        if (lastHistorySignature === null) {
+            outbound.innerHTML = inbound.innerHTML = '<p class="history-empty">' + escapeHtml(error.message) + '</p>';
+        } else console.error('Không thể cập nhật lịch sử:', error);
+    } finally {
+        historyLoading = false;
     }
 }
 
@@ -457,7 +473,17 @@ document.addEventListener('DOMContentLoaded', () => {
 
     switchTab('overview');
     loadData();
-    refreshTimer = window.setInterval(loadData, 10000);
+    refreshTimer = window.setInterval(() => {
+        if (document.hidden) return;
+        loadData();
+        if (!$('view-history')?.classList.contains('local-hidden')) loadAccessHistory();
+    }, 5000);
+    document.addEventListener('visibilitychange', () => {
+        if (!document.hidden) {
+            loadData();
+            if (!$('view-history')?.classList.contains('local-hidden')) loadAccessHistory();
+        }
+    });
 });
 
 async function deleteRecord(url, label, refreshDropdowns = false) {
